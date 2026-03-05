@@ -1,232 +1,83 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hook Quiz Editor</title>
+  <meta charset="UTF-8">
+  <title>Редактор квиза - Quiz Miner</title>
   <style>
-    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#0b0f1a;color:#fff}
-    .wrap{padding:14px;max-width:980px;margin:0 auto}
-    h1{font-size:18px;margin:0 0 10px}
-    .card{
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 14px;
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      padding-top: 50px;
+    }
+    .editor-container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    h2 { margin-top: 0; color: #2c3e50; text-align: center; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }
+    input[type="text"], select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #bdc3c7;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    .answers-inputs input { margin-bottom: 8px; }
+    button {
+      width: 100%;
       padding: 12px;
-      box-shadow: 0 12px 28px rgba(0,0,0,.35);
-      margin-bottom: 12px;
+      background-color: #2ecc71;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    label{display:block;font-size:12px;opacity:.85;margin-bottom:6px}
-    input,textarea{
-      width:100%;
-      border-radius: 12px;
-      border:1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.35);
-      color:#fff;
-      padding: 10px 10px;
-      outline:none;
-      font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
-      box-sizing:border-box;
-    }
-    textarea{min-height: 260px; resize: vertical}
-    .row{display:grid;grid-template-columns: repeat(4, minmax(0,1fr)); gap:10px}
-    .btns{display:flex;gap:10px;flex-wrap:wrap}
-    button{
-      border:0; cursor:pointer;
-      background: linear-gradient(90deg, rgba(124,255,178,.9), rgba(130,170,255,.9));
-      color:#071018;
-      font-weight:800;
-      border-radius: 12px;
-      padding: 10px 12px;
-      box-shadow: 0 12px 26px rgba(0,0,0,.35);
-    }
-    button.secondary{
-      background: rgba(255,255,255,.10);
-      color:#fff;
-      border:1px solid rgba(255,255,255,.14);
-      box-shadow:none;
-    }
-    .hint{font-size:12px;opacity:.8;line-height:1.4}
-    .ok{color:#7CFFB2}
-    .bad{color:#FF5C7A}
-    .mono{font-family: ui-monospace, Menlo, Consolas, monospace}
+    button:hover { background-color: #27ae60; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>🪝 Hook Quiz — Editor</h1>
 
-    <div class="card">
-      <div class="row">
-        <div>
-          <label>Мишени (min 2…6)</label>
-          <input id="tMin" type="number" min="2" max="6" value="2">
-        </div>
-        <div>
-          <label>Мишени (max 2…6)</label>
-          <input id="tMax" type="number" min="2" max="6" value="6">
-        </div>
-        <div>
-          <label>Скорость мишеней (сек.)</label>
-          <input id="tSpeed" type="number" step="0.1" min="1.5" max="10" value="3.4">
-        </div>
-        <div>
-          <label>Качание крюка (сек.)</label>
-          <input id="swingSpeed" type="number" step="0.05" min="0.6" max="4" value="1.25">
-        </div>
+  <div class="editor-container">
+    <h2>Создать вопрос</h2>
+    <form id="quiz-form">
+      <div class="form-group">
+        <label for="question-input">Текст вопроса:</label>
+        <input type="text" id="question-input" placeholder="Например: Сколько будет 2 + 2?" required>
       </div>
-      <div style="height:10px"></div>
-      <div class="row">
-        <div>
-          <label>Очки за верно</label>
-          <input id="pGood" type="number" step="1" value="10">
-        </div>
-        <div>
-          <label>Очки за ошибку</label>
-          <input id="pBad" type="number" step="1" value="-2">
-        </div>
-        <div>
-          <label>Длина вылета (px)</label>
-          <input id="maxLen" type="number" step="10" min="220" max="900" value="420">
-        </div>
-        <div>
-          <label>Скорость вылета (сек.)</label>
-          <input id="outDur" type="number" step="0.01" min="0.12" max="0.5" value="0.22">
-        </div>
-      </div>
-    </div>
 
-    <div class="card">
-      <label>Вопросы (JSON) — формат:</label>
-      <div class="hint mono">
-        [
-          {"q":"...", "answers":[{"t":"...", "ok":true},{"t":"...", "ok":false}]}
-        ]
+      <div class="form-group answers-inputs">
+        <label>Варианты ответа (мишени):</label>
+        <input type="text" id="answer-1" placeholder="Вариант 1 (Индекс 0)" required>
+        <input type="text" id="answer-2" placeholder="Вариант 2 (Индекс 1)" required>
+        <input type="text" id="answer-3" placeholder="Вариант 3 (Индекс 2)" required>
+        <input type="text" id="answer-4" placeholder="Вариант 4 (Индекс 3)" required>
       </div>
-      <div style="height:10px"></div>
-      <textarea id="qJson"></textarea>
-      <div style="height:10px"></div>
-      <div class="btns">
-        <button id="apply">Применить</button>
-        <button class="secondary" id="loadDemo">Загрузить демо</button>
-        <button class="secondary" id="copyBase64">Скопировать config (base64) для ?config=</button>
-      </div>
-      <div style="height:10px"></div>
-      <div class="hint" id="status"></div>
-    </div>
 
-    <div class="card">
-      <div class="hint">
-        <span class="ok">Как это подключается в Genially:</span><br/>
-        1) editor сохраняет конфиг, 2) player (main) получает его через <span class="mono">postMessage</span>.<br/>
-        Если в твоей сборке Genially нужен другой протокол сообщений — скажи, и я подстрою под их точный формат.
+      <div class="form-group">
+        <label for="correct-select">Какой ответ правильный?</label>
+        <select id="correct-select">
+          <option value="0">Вариант 1</option>
+          <option value="1">Вариант 2</option>
+          <option value="2">Вариант 3</option>
+          <option value="3">Вариант 4</option>
+        </select>
       </div>
-    </div>
 
+      <button type="button" id="save-quiz-btn">Сохранить на сервер</button>
+    </form>
   </div>
 
-<script>
-(() => {
-  const demoQuestions = [
-    { q: "Выбери правильную форму: He ___ to school.", answers: [
-      { t: "go", ok:false }, { t: "goes", ok:true }, { t: "going", ok:false }
-    ]},
-    { q: "Выбери предлог: The cat is ___ the table.", answers: [
-      { t: "on", ok:true }, { t: "in", ok:false }, { t: "at", ok:false }, { t: "to", ok:false }
-    ]}
-  ];
+  <script src="editor.js"></script>
 
-  const el = (id) => document.getElementById(id);
-
-  const qJson = el("qJson");
-  const status = el("status");
-
-  function setStatus(html){ status.innerHTML = html; }
-
-  function buildConfig(){
-    const cfg = {
-      swing: { speed: num(el("swingSpeed").value, 1.25) },
-      shoot: {
-        maxLen: num(el("maxLen").value, 420),
-        outDur: num(el("outDur").value, 0.22)
-      },
-      targets: {
-        min: int(el("tMin").value, 2),
-        max: int(el("tMax").value, 6),
-        speed: num(el("tSpeed").value, 3.4)
-      },
-      scoring: {
-        correct: int(el("pGood").value, 10),
-        wrong: int(el("pBad").value, -2)
-      },
-      questions: []
-    };
-
-    // questions JSON
-    let arr;
-    try{
-      arr = JSON.parse(qJson.value);
-      if(!Array.isArray(arr) || arr.length === 0) throw new Error("questions must be non-empty array");
-      cfg.questions = arr;
-    }catch(e){
-      throw new Error("Проверь JSON вопросов: " + e.message);
-    }
-
-    // clamp min/max
-    cfg.targets.min = clamp(cfg.targets.min, 2, 6);
-    cfg.targets.max = clamp(cfg.targets.max, 2, 6);
-    if(cfg.targets.min > cfg.targets.max) cfg.targets.min = cfg.targets.max;
-
-    return cfg;
-  }
-
-  function sendToPlayer(cfg){
-    // универсально: шлём родителю (Genially) и “всем”
-    const msg = { type: "HOOKQUIZ_CONFIG", payload: cfg };
-
-    window.parent?.postMessage(msg, "*");
-    window.postMessage(msg, "*");
-  }
-
-  el("apply").addEventListener("click", () => {
-    try{
-      const cfg = buildConfig();
-      sendToPlayer(cfg);
-      setStatus(`<span class="ok">✅ Конфиг отправлен в player.</span>`);
-    }catch(e){
-      setStatus(`<span class="bad">❌ ${escapeHtml(e.message)}</span>`);
-    }
-  });
-
-  el("loadDemo").addEventListener("click", () => {
-    qJson.value = JSON.stringify(demoQuestions, null, 2);
-    setStatus(`<span class="ok">✅ Демо загружено. Нажми “Применить”.</span>`);
-  });
-
-  el("copyBase64").addEventListener("click", async () => {
-    try{
-      const cfg = buildConfig();
-      const json = JSON.stringify(cfg);
-      const b64 = btoa(unescape(encodeURIComponent(json)));
-      await navigator.clipboard.writeText(b64);
-      setStatus(`<span class="ok">✅ Скопировано.</span> Теперь можно открыть main.html как <span class="mono">main.html?config=...base64...</span>`);
-    }catch(e){
-      setStatus(`<span class="bad">❌ ${escapeHtml(e.message)}</span>`);
-    }
-  });
-
-  // init
-  qJson.value = JSON.stringify(demoQuestions, null, 2);
-
-  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-  function int(v, d){ const n = parseInt(v,10); return Number.isFinite(n)?n:d; }
-  function num(v, d){ const n = parseFloat(v); return Number.isFinite(n)?n:d; }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
-  }
-})();
-</script>
 </body>
 </html>

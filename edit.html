@@ -161,24 +161,32 @@
             <h2>🎨 Изображения (Ссылки)</h2>
             <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif).</p>
             <div class="qStack">
-              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="https://nikashum93.github.io/hk/hero.png"></div>
-              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="https://nikashum93.github.io/hk/hook.png"></div>
-              <div><label>Мишень (Target)</label><input id="img_target" type="text" value="https://nikashum93.github.io/hk/target.png"></div>
+              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="🧙‍♂️"></div>
+              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="⚓"></div>
+              <div><label>Мишень (Target)</label><input id="img_target" type="text" value=""></div>
             </div>
           </div>
 
           <div class="card">
             <h2>✨ Стили и Размеры</h2>
             <div class="grid2">
-              <div><label>Цвет неоновой веревки</label><input id="color_rope" type="color" value="#00ffcc"></div>
+              <div><label>Цвет цепи</label><input id="color_rope" type="color" value="#bdc3c7"></div>
               <div><label>Фон вопроса</label><input id="color_qbox" type="color" value="#ffffff"></div>
               <div>
                 <label>Размер персонажа</label>
                 <input id="hero_size" type="range" min="40" max="200" value="120">
               </div>
               <div>
-                <label>Позиция персонажа (Y)</label>
+                <label>Позиция персонажа (Y от низа)</label>
                 <input id="hero_y" type="range" min="0" max="200" value="80">
+              </div>
+               <div>
+                <label>Размер крюка</label>
+                <input id="hook_size" type="range" min="20" max="150" value="50">
+              </div>
+              <div>
+                <label>Позиция крюка (Y от персонажа)</label>
+                <input id="hook_y" type="range" min="-100" max="100" value="0">
               </div>
             </div>
           </div>
@@ -213,7 +221,7 @@
     }
   };
 
-  const BASE_MAIN = "https://nikashum93.github.io/hk/main.html"; // Твоя ссылка на main
+  const BASE_MAIN = "https://nikashum93.github.io/hk/main.html"; // Твоя ссылка на main (поменял на hk)
   const ENDPOINT = "https://server-kjnn.onrender.com/publish";
   const PUBLISH_KEY = "nika_read_pub_2025";
 
@@ -256,12 +264,14 @@
         hero: document.getElementById('img_hero').value || "🧙‍♂️",
         hook: document.getElementById('img_hook').value || "⚓",
         target: document.getElementById('img_target').value || "",
-        ropeColor: document.getElementById('color_rope').value || "#00ffcc",
+        ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
         qBoxColor: document.getElementById('color_qbox').value || "#ffffff",
         heroSize: parseInt(document.getElementById('hero_size').value) || 120,
-        heroYOffset: parseInt(document.getElementById('hero_y').value) || 80
+        heroYOffset: parseInt(document.getElementById('hero_y').value) || 80,
+        hookSize: parseInt(document.getElementById('hook_size').value) || 50,
+        hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0
       },
-      gameplay: { hookSpeed: 7, swingSpeed: 0.035 }, // Замедляем движение крюка!
+      gameplay: { hookSpeed: 9, swingSpeed: 0.035 }, // Скорость крюка чуть повыше
       tasks: tasks
     };
   }

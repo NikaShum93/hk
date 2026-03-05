@@ -69,7 +69,6 @@
     }
     .btn:active { transform: translateY(4px); border-bottom-width: 4px; }
     
-    /* Анимация всплывающих очков */
     .floating-text {
       position: absolute; font-family: 'Fredoka One', cursive;
       font-size: 4vmin; color: #00ffcc; text-shadow: 0 0 10px #00ffcc;
@@ -120,10 +119,10 @@
     ui: { title: "QUIZ MINER", start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!" },
     visual: { 
       hero: "🧙‍♂️", hook: "⚓", target: "", 
-      ropeColor: "#00ffcc", qBoxColor: "#ffffff",
-      heroSize: 120, heroYOffset: 80 
+      ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
+      heroSize: 120, heroYOffset: 80, hookSize: 50, hookOffsetY: 0
     },
-    gameplay: { hookSpeed: 7, swingSpeed: 0.035 }, // Медленный крюк
+    gameplay: { hookSpeed: 9, swingSpeed: 0.035 }, 
     tasks: [] 
   };
 
@@ -156,7 +155,6 @@
     const qb = document.getElementById('question-text');
     qb.style.background = CFG.visual.qBoxColor;
     
-    // Вычисляем яркость фона, чтобы текст не сливался (черный/белый)
     const hex = CFG.visual.qBoxColor.replace('#', '');
     if(hex.length === 6) {
         const r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
@@ -171,9 +169,9 @@
   window.addEventListener('resize', resize);
   resize();
 
-  // Кэш для картинок, чтобы не моргало
   const imgCache = {};
   function renderEntity(val, x, y, defaultSize, isTarget = false, targetW = 0, targetH = 0) {
+    if (!val) return false;
     if (val.startsWith('http') || val.endsWith('.png') || val.endsWith('.jpg') || val.endsWith('.gif') || val.startsWith('data:image')) {
       if (!imgCache[val]) {
         const img = new Image(); img.src = val; imgCache[val] = img;
@@ -182,14 +180,38 @@
         const w = isTarget ? targetW : defaultSize;
         const h = isTarget ? targetH : defaultSize;
         ctx.drawImage(imgCache[val], x - w/2, y - h/2, w, h);
-        return true; // Картинка отрисована
+        return true; 
       }
     } else {
       ctx.font = `${defaultSize}px Arial`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(val, x, y);
-      return false; // Это был текст/эмодзи
+      return false; 
     }
+  }
+
+  // Отрисовка цепи
+  function drawChain(x1, y1, x2, y2, color) {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const angle = Math.atan2(dy, dx);
+    const linkLength = 15;
+    const numLinks = Math.max(1, Math.floor(dist / linkLength));
+
+    ctx.save();
+    ctx.translate(x1, y1);
+    ctx.rotate(angle);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+
+    for (let i = 0; i < numLinks; i++) {
+      ctx.beginPath();
+      // Рисуем звено как вытянутый овал
+      ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   const Game = {
@@ -246,12 +268,11 @@
 
       const targetW = 140, targetH = 60;
       const rowCapacity = Math.max(2, Math.ceil(allAnswers.length / 2)); 
-      // Жестко выделяем непересекающиеся зоны по ширине экрана
       const zoneWidth = canvas.width / rowCapacity; 
 
       allAnswers.forEach((ans, i) => {
-        const row = i % 2; // Ряд 0 или 1
-        const col = Math.floor(i / 2); // Колонка
+        const row = i % 2; 
+        const col = Math.floor(i / 2); 
         const minX = col * zoneWidth + targetW/2 + 20;
         const maxX = (col + 1) * zoneWidth - targetW/2 - 20;
         
@@ -261,7 +282,7 @@
           x: minX + Math.random() * (maxX - minX),
           y: canvas.height * 0.25 + (row * 100),
           w: targetW, h: targetH,
-          speed: (Math.random() * 1.5 + 1.0) * (Math.random() > 0.5 ? 1 : -1) // Плавное движение
+          speed: (Math.random() * 1.5 + 1.0) * (Math.random() > 0.5 ? 1 : -1) 
         });
       });
 
@@ -278,13 +299,12 @@
     update() {
       if (this.state !== 'playing') return;
 
-      const speed = CFG.gameplay.hookSpeed || 7;
+      const speed = CFG.gameplay.hookSpeed || 9;
       const swingSpeed = CFG.gameplay.swingSpeed || 0.035;
       
       this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80);
+      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80) + (CFG.visual.hookOffsetY || 0);
 
-      // Движение мишеней в пределах их безопасных зон (нет нахлестов!)
       this.targets.forEach(t => {
         t.x += t.speed;
         if (t.x > t.maxX) { t.x = t.maxX; t.speed *= -1; }
@@ -302,28 +322,35 @@
 
         for (let i = 0; i < this.targets.length; i++) {
           let t = this.targets[i];
+          // Если произошло касание мишени
           if (Math.abs(hx - t.x) < t.w/2 && Math.abs(hy - t.y) < t.h/2) {
-            this.hookState = 'retracting'; this.hook.caughtTarget = t;
-            this.targets.splice(i, 1); break;
+            this.hookState = 'retracting'; // СРАЗУ тащим обратно
+            this.hook.caughtTarget = t;
+            this.targets.splice(i, 1); 
+            break;
           }
         }
+        // Если пролетел мимо всех мишеней
         if (this.hook.length > this.hook.maxLength) {
            this.hookState = 'retracting';
-           this.combo = 1.0; // Сброс комбо если выстрел в молоко
+           this.combo = 1.0; 
            document.getElementById('combo-display').textContent = this.combo.toFixed(1);
         }
       } 
       else if (this.hookState === 'retracting') {
-        this.hook.length -= speed;
+        this.hook.length -= speed * 1.5; // Сматываем быстрее, чем стреляли
+        
         if (this.hook.caughtTarget) {
           this.hook.caughtTarget.x = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
           this.hook.caughtTarget.y = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
+          // Временно добавляем обратно в список для отрисовки
           this.targets.push(this.hook.caughtTarget);
           this.hook.caughtTarget = null;
         }
 
         if (this.hook.length <= 80) {
-          this.hookState = 'swinging'; this.hook.length = 80;
+          this.hookState = 'swinging'; 
+          this.hook.length = 80;
           
           let caughtIndex = this.targets.findIndex(t => t.y > canvas.height - 200);
           if (caughtIndex !== -1) {
@@ -344,7 +371,7 @@
               this.spawnFloaty("Промах!", this.hook.x, this.hook.y - 120, '#e74c3c');
               document.getElementById('question-text').textContent = "Ой! Не та мишень!";
               
-              // Возвращаем мишень обратно наверх
+              // Возвращаем мишень наверх
               caught.y = canvas.height * 0.25; 
               setTimeout(() => this.loadTask(), 1200);
             }
@@ -362,7 +389,6 @@
             hasImage = renderEntity(CFG.visual.target, t.x, t.y, t.w, true, t.w, t.h);
         }
         
-        // Если картинки нет или она не загрузилась, рисуем плашку
         if(!hasImage) {
             ctx.fillStyle = 'rgba(30,30,30,0.8)';
             ctx.beginPath(); ctx.roundRect(t.x - t.w/2, t.y - t.h/2, t.w, t.h, 10); ctx.fill();
@@ -375,26 +401,20 @@
       });
 
       this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80);
+      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80) + (CFG.visual.hookOffsetY || 0);
       const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
       const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
 
-      // НЕОНОВАЯ ВЕРЕВКА
-      ctx.beginPath();
-      ctx.moveTo(this.hook.x, this.hook.y);
-      ctx.lineTo(hx, hy);
-      ctx.strokeStyle = CFG.visual.ropeColor || "#00ffcc"; 
-      ctx.lineWidth = 5; 
-      ctx.shadowColor = CFG.visual.ropeColor || "#00ffcc";
-      ctx.shadowBlur = 15; // Свечение
-      ctx.stroke();
-      ctx.shadowBlur = 0; // Сбрасываем тень для остальных элементов
+      // ЦЕПЬ
+      drawChain(this.hook.x, this.hook.y, hx, hy, CFG.visual.ropeColor || "#bdc3c7");
 
       // Крюк
-      renderEntity(CFG.visual.hook || "⚓", hx, hy, 50);
+      renderEntity(CFG.visual.hook || "⚓", hx, hy, CFG.visual.hookSize || 50);
 
       // Персонаж
-      renderEntity(CFG.visual.hero || "🧙‍♂️", this.hook.x, this.hook.y, CFG.visual.heroSize || 120);
+      const heroX = canvas.width / 2;
+      const heroY = canvas.height - (CFG.visual.heroYOffset || 80);
+      renderEntity(CFG.visual.hero || "🧙‍♂️", heroX, heroY, CFG.visual.heroSize || 120);
     },
 
     loop() {

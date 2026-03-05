@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Quiz Miner — Редактор</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&family=Nunito:wght@700&family=Russo+One&family=Pacifico&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <style>
     html,body{height:100%;}
     :root{
@@ -43,15 +43,15 @@
     .brandTitle .mini{ font-weight:900; color:var(--accent); font-size:12px; text-transform:uppercase; }
     
     label{font-weight:800; font-size:12px; text-transform:uppercase; color:#444; display:block; margin-bottom:5px;}
-    input[type=text], input[type=color], input[type=range], textarea{
+    input[type=text], input[type=color], input[type=range], textarea, select{
       width:100%; padding:10px; border-radius:12px; border:2px solid #ddd;
-      font-family:'Montserrat',sans-serif; outline:none; transition:.15s;
+      font-family:'Montserrat',sans-serif; outline:none; transition:.15s; background:#fff;
     }
     input[type=color] { height: 40px; cursor: pointer; padding: 2px; }
-    textarea{ min-height:120px; resize:vertical; }
-    input:focus,textarea:focus{ border-color:var(--primary); }
+    textarea{ min-height:80px; resize:vertical; }
+    input:focus,textarea:focus,select:focus{ border-color:var(--primary); }
 
-    .tabbar{ display:flex; gap:6px; margin-top:10px; }
+    .tabbar{ display:flex; gap:6px; margin-top:10px; flex-wrap: wrap;}
     .tab{
       border:none; background:rgba(255,255,255,.55); border:1px solid var(--stroke);
       padding:10px 12px; border-top-left-radius:14px; border-top-right-radius:14px;
@@ -126,6 +126,7 @@
         <button class="tab active" data-tab="tasks">Задания</button>
         <button class="tab" data-tab="settings">Интерфейс</button>
         <button class="tab" data-tab="visual">Графика</button>
+        <button class="tab" data-tab="text">Тексты и Шрифты</button>
       </div>
     </div>
 
@@ -138,8 +139,8 @@
             <p style="font-size:12px; color:#666;">Каждая строка = одно задание. В "Неверно" пиши неправильные мишени через запятую или <b>|</b>.</p>
             <div class="qStack">
               <div><label>Вопрос (текст сверху)</label><textarea id="q_col" placeholder="2 + 2 = ?&#10;Столица Франции?"></textarea></div>
-              <div><label>Правильный ответ (одна мишень)</label><textarea id="c_col" placeholder="4&#10;Париж"></textarea></div>
-              <div><label>Неправильные ответы (мишени-обманки)</label><textarea id="w_col" placeholder="3 | 5 | 6&#10;Лондон | Берлин | Мадрид"></textarea></div>
+              <div><label>Правильный ответ</label><textarea id="c_col" placeholder="4&#10;Париж"></textarea></div>
+              <div><label>Неправильные ответы</label><textarea id="w_col" placeholder="3 | 5 | 6&#10;Лондон | Берлин | Мадрид"></textarea></div>
             </div>
           </div>
         </div>
@@ -159,34 +160,73 @@
         <div class="tabPanel" data-panel="visual">
           <div class="card">
             <h2>🎨 Изображения (Ссылки)</h2>
-            <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif).</p>
+            <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif). Каждая мишень с новой строки (будут браться рандомно).</p>
             <div class="qStack">
-              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="🧙‍♂️"></div>
-              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="⚓"></div>
-              <div><label>Мишень (Target)</label><input id="img_target" type="text" value=""></div>
+              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="https://nikashum93.github.io/hk/hero.png"></div>
+              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="https://nikashum93.github.io/hk/hook.png"></div>
+              <div><label>Мишени (Targets)</label><textarea id="img_target" placeholder="🍔&#10;🍕">🍔</textarea></div>
             </div>
           </div>
 
           <div class="card">
             <h2>✨ Стили и Размеры</h2>
             <div class="grid2">
-              <div><label>Цвет цепи</label><input id="color_rope" type="color" value="#bdc3c7"></div>
+              <div><label>Цвет 3D-цепи</label><input id="color_rope" type="color" value="#7f8c8d"></div>
               <div><label>Фон вопроса</label><input id="color_qbox" type="color" value="#ffffff"></div>
               <div>
                 <label>Размер персонажа</label>
-                <input id="hero_size" type="range" min="40" max="200" value="120">
+                <input id="hero_size" type="range" min="40" max="250" value="150">
               </div>
               <div>
-                <label>Позиция персонажа (Y от низа)</label>
-                <input id="hero_y" type="range" min="0" max="200" value="80">
+                <label>Размер мишеней</label>
+                <input id="target_size" type="range" min="40" max="200" value="90">
               </div>
-               <div>
+              <div>
                 <label>Размер крюка</label>
-                <input id="hook_size" type="range" min="20" max="150" value="50">
+                <input id="hook_size" type="range" min="20" max="150" value="60">
               </div>
               <div>
                 <label>Позиция крюка (Y от персонажа)</label>
                 <input id="hook_y" type="range" min="-100" max="100" value="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabPanel" data-panel="text">
+          <div class="card">
+            <h2>🔤 Шрифты и Стили</h2>
+            <div class="qStack">
+              <div>
+                <label>Шрифт игры</label>
+                <select id="font_family">
+                  <option value="Montserrat">Montserrat (Современный)</option>
+                  <option value="Fredoka One">Fredoka One (Жирный Игровой)</option>
+                  <option value="Nunito">Nunito (Мягкий)</option>
+                  <option value="Russo One">Russo One (Квадратный)</option>
+                  <option value="Comic Neue">Comic Neue (Комикс)</option>
+                  <option value="Pacifico">Pacifico (Рукописный)</option>
+                </select>
+              </div>
+            </div>
+            
+            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст вопроса</h3>
+            <div class="grid2">
+              <div><label>Цвет текста</label><input id="q_color" type="color" value="#111111"></div>
+              <div><label>Неоновое свечение (Тень)</label><input id="q_glow" type="color" value="#000000"></div>
+              <div style="grid-column: 1 / -1">
+                <label>Размер шрифта вопроса</label>
+                <input id="q_size" type="range" min="2" max="10" step="0.5" value="4.5">
+              </div>
+            </div>
+
+            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст над мишенями</h3>
+            <div class="grid2">
+              <div><label>Цвет текста</label><input id="t_color" type="color" value="#000000"></div>
+              <div><label>Неоновое свечение (Тень)</label><input id="t_glow" type="color" value="#000000"></div>
+              <div style="grid-column: 1 / -1">
+                <label>Размер шрифта мишеней</label>
+                <input id="t_size" type="range" min="10" max="50" value="22">
               </div>
             </div>
           </div>
@@ -221,7 +261,7 @@
     }
   };
 
-  const BASE_MAIN = "https://nikashum93.github.io/hk/main.html"; // Твоя ссылка на main (поменял на hk)
+  const BASE_MAIN = "https://nikashum93.github.io/hk/main.html"; 
   const ENDPOINT = "https://server-kjnn.onrender.com/publish";
   const PUBLISH_KEY = "nika_read_pub_2025";
 
@@ -263,15 +303,23 @@
       visual: {
         hero: document.getElementById('img_hero').value || "🧙‍♂️",
         hook: document.getElementById('img_hook').value || "⚓",
-        target: document.getElementById('img_target').value || "",
+        targets: parseLines(document.getElementById('img_target').value).filter(x=>x),
+        targetSize: parseInt(document.getElementById('target_size').value) || 90,
         ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
         qBoxColor: document.getElementById('color_qbox').value || "#ffffff",
-        heroSize: parseInt(document.getElementById('hero_size').value) || 120,
-        heroYOffset: parseInt(document.getElementById('hero_y').value) || 80,
-        hookSize: parseInt(document.getElementById('hook_size').value) || 50,
-        hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0
+        heroSize: parseInt(document.getElementById('hero_size').value) || 150,
+        hookSize: parseInt(document.getElementById('hook_size').value) || 60,
+        hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0,
+        // Texts
+        fontFamily: document.getElementById('font_family').value || 'Montserrat',
+        qColor: document.getElementById('q_color').value || '#111111',
+        qGlow: document.getElementById('q_glow').value || '#000000',
+        qSize: parseFloat(document.getElementById('q_size').value) || 4.5,
+        tColor: document.getElementById('t_color').value || '#000000',
+        tGlow: document.getElementById('t_glow').value || '#000000',
+        tSize: parseInt(document.getElementById('t_size').value) || 22
       },
-      gameplay: { hookSpeed: 9, swingSpeed: 0.035 }, // Скорость крюка чуть повыше
+      gameplay: { hookSpeed: 10, swingSpeed: 0.035 }, 
       tasks: tasks
     };
   }

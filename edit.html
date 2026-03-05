@@ -1,83 +1,313 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Редактор квиза - Quiz Miner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Quiz Miner — Редактор</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f4f6f8;
-      display: flex;
-      justify-content: center;
-      padding-top: 50px;
+    /* Базовые стили скопированы из твоего оригинала, чтобы всё выглядело так же */
+    html,body{height:100%;}
+    :root{
+      --primary:#f39c12;
+      --accent:#e74c3c;
+      --glass:rgba(255,255,255,0.95);
+      --bg1:#2c3e50;
+      --bg2:#1a252f;
+      --stroke:rgba(0,0,0,.10);
     }
-    .editor-container {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      width: 400px;
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:'Montserrat',sans-serif;
+      background: radial-gradient(circle at center, var(--bg1) 0%, var(--bg2) 100%);
+      padding:24px 14px; color:#222; overflow:auto;
     }
-    h2 { margin-top: 0; color: #2c3e50; text-align: center; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; color: #34495e; }
-    input[type="text"], select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #bdc3c7;
-      border-radius: 6px;
-      box-sizing: border-box;
-      font-size: 14px;
+    .bg-float{
+      position:fixed; font-size:46px; opacity:.15; z-index:-1;
+      animation: floatSpace 22s infinite linear; pointer-events:none;
     }
-    .answers-inputs input { margin-bottom: 8px; }
-    button {
-      width: 100%;
-      padding: 12px;
-      background-color: #2ecc71;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
+    @keyframes floatSpace{ 0%{transform:translateY(110vh) rotate(0deg)} 100%{transform:translateY(-10vh) rotate(360deg)} }
+
+    .wrap{
+      width:min(1280px, calc(100vw - 24px)); aspect-ratio:16 / 9;
+      max-height:min(92vh, 720px); margin:0 auto;
+      background:var(--glass); border-radius:18px;
+      box-shadow:0 0 18px var(--primary), 0 0 60px rgba(243,156,18,.18);
+      overflow:hidden; display:flex; flex-direction:column;
     }
-    button:hover { background-color: #27ae60; }
+
+    .top{ padding:18px 18px 10px 18px; border-bottom:1px solid rgba(0,0,0,.06); flex:none; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .logoBox{
+      width:44px; height:44px; border-radius:14px; background:rgba(243,156,18,.12);
+      border:1px solid rgba(243,156,18,.25); display:flex; align-items:center; justify-content:center;
+      font-size:26px; flex:none;
+    }
+    .brandTitle h1{ margin:0; font-family:'Fredoka One',cursive; font-size:38px; line-height:1; color:#d35400;}
+    .brandTitle .mini{ font-weight:900; color:var(--accent); font-size:12px; text-transform:uppercase; }
+    
+    label{font-weight:800; font-size:12px; text-transform:uppercase; color:#444; display:block; margin-bottom:5px;}
+    input[type=text],textarea{
+      width:100%; padding:10px; border-radius:12px; border:2px solid #ddd;
+      font-family:'Montserrat',sans-serif; outline:none; transition:.15s;
+    }
+    textarea{ min-height:120px; resize:vertical; }
+    input:focus,textarea:focus{ border-color:var(--primary); }
+
+    .tabbar{ display:flex; gap:6px; margin-top:10px; }
+    .tab{
+      border:none; background:rgba(255,255,255,.55); border:1px solid var(--stroke);
+      padding:10px 12px; border-top-left-radius:14px; border-top-right-radius:14px;
+      font-weight:900; font-size:12px; cursor:pointer;
+    }
+    .tabPanel{display:none} .tabPanel.active{display:block}
+    .tab.active{ background:#fff; border-bottom-color:transparent; }
+
+    .main{ flex:1; min-height:0; display:grid; grid-template-columns: 420px 1fr; gap:14px; padding:14px 18px; }
+    .left{ overflow:auto; padding-right:6px; }
+    .right{ display:flex; flex-direction:column; gap:10px; }
+    
+    .toolbar{ display:flex; gap:10px; align-items:center; }
+    .btn{
+      border:none; border-radius:14px; padding:12px 14px; cursor:pointer;
+      font-weight:900; text-transform:uppercase; color:#fff;
+    }
+    .btn.primary{ background:var(--primary); }
+    .btn.ghost{ background:#fff; color:#111; border:2px solid #ccc; }
+    .status{ margin-left:auto; font-weight:900; color:#333; padding:10px 12px; background:#eee; border-radius:999px;}
+
+    .previewOuter{ flex:1; background:#f0f0f0; border-radius:14px; overflow:hidden; position:relative; }
+    iframe{ width:100%; height:100%; border:none; }
+
+    .card{ background:rgba(255,255,255,.6); border:1px solid var(--stroke); border-radius:14px; padding:14px; margin-bottom:12px; }
+    .card h2{ margin:0 0 10px; font-size:15px; border-bottom:2px solid var(--primary); padding-bottom:8px; }
+    
+    .qStack{ display:flex; flex-direction:column; gap:12px; }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    
+    .toast{
+      position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+      background:rgba(0,0,0,.85); color:#fff; padding:10px 14px; border-radius:999px;
+      font-weight:800; opacity:0; transition:.2s; pointer-events:none;
+    }
+    .toast.show{ opacity:1; }
+
+    /* Пароль */
+    .pass-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.86); display:none; align-items:center; justify-content:center; z-index:110000; }
+    body.locked .pass-overlay{ display:flex; }
+    body.locked .wrap { display:none; }
+    .pass-card{ background:#fff; border-radius:18px; padding:18px; text-align:center; }
+    .pass-input{ padding:10px; border-radius:10px; border:2px solid #ddd; text-align:center; font-weight:bold; }
   </style>
 </head>
-<body>
+<body class="locked">
 
-  <div class="editor-container">
-    <h2>Создать вопрос</h2>
-    <form id="quiz-form">
-      <div class="form-group">
-        <label for="question-input">Текст вопроса:</label>
-        <input type="text" id="question-input" placeholder="Например: Сколько будет 2 + 2?" required>
-      </div>
-
-      <div class="form-group answers-inputs">
-        <label>Варианты ответа (мишени):</label>
-        <input type="text" id="answer-1" placeholder="Вариант 1 (Индекс 0)" required>
-        <input type="text" id="answer-2" placeholder="Вариант 2 (Индекс 1)" required>
-        <input type="text" id="answer-3" placeholder="Вариант 3 (Индекс 2)" required>
-        <input type="text" id="answer-4" placeholder="Вариант 4 (Индекс 3)" required>
-      </div>
-
-      <div class="form-group">
-        <label for="correct-select">Какой ответ правильный?</label>
-        <select id="correct-select">
-          <option value="0">Вариант 1</option>
-          <option value="1">Вариант 2</option>
-          <option value="2">Вариант 3</option>
-          <option value="3">Вариант 4</option>
-        </select>
-      </div>
-
-      <button type="button" id="save-quiz-btn">Сохранить на сервер</button>
-    </form>
+  <div class="pass-overlay" id="passOverlay">
+    <div class="pass-card">
+      <h3>🔒 Редактор Quiz Miner</h3>
+      <input class="pass-input" id="passInput" type="password" placeholder="Пароль">
+      <button class="btn primary" id="passBtn">Войти</button>
+      <div id="passErr" style="color:red; display:none; margin-top:10px;">Неверный пароль</div>
+    </div>
   </div>
 
-  <script src="editor.js"></script>
+  <div class="bg-float" style="left:10%;">💰</div>
+  <div class="bg-float" style="left:80%; animation-delay:-5s;">⛏️</div>
 
+  <div class="wrap">
+    <div class="top">
+      <header>
+        <div class="brand">
+          <div class="logoBox">⛏️</div>
+          <div class="brandTitle">
+            <h1>QUIZ MINER</h1>
+            <div class="mini">Редактор игры</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="tabbar" id="tabs">
+        <button class="tab active" data-tab="tasks">Задания</button>
+        <button class="tab" data-tab="settings">Настройки и Графика</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="left">
+        
+        <div class="tabPanel active" data-panel="tasks">
+          <div class="card">
+            <h2>📝 Вопросы и Ответы</h2>
+            <p style="font-size:12px; color:#666;">Каждая строка = одно задание. В "Неверно" пиши неправильные мишени через запятую или <b>|</b>.</p>
+            <div class="qStack">
+              <div><label>Вопрос (текст сверху)</label><textarea id="q_col" placeholder="2 + 2 = ?&#10;Столица Франции?"></textarea></div>
+              <div><label>Правильный ответ (одна мишень)</label><textarea id="c_col" placeholder="4&#10;Париж"></textarea></div>
+              <div><label>Неправильные ответы (мишени-обманки)</label><textarea id="w_col" placeholder="3 | 5 | 6&#10;Лондон | Берлин | Мадрид"></textarea></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabPanel" data-panel="settings">
+          <div class="card">
+            <h2>⚙️ Интерфейс</h2>
+            <div class="grid2">
+              <div><label>Заголовок игры</label><input id="ui_title" type="text" value="QUIZ MINER"></div>
+              <div><label>Текст победы</label><input id="ui_win" type="text" value="КВИЗ ПРОЙДЕН!"></div>
+              <div><label>Кнопка Старт</label><input id="ui_start" type="text" value="СТАРТ"></div>
+              <div><label>Кнопка Повтор</label><input id="ui_again" type="text" value="ЕЩЁ РАЗ"></div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>🎨 Графика (Эмодзи)</h2>
+            <div class="grid2">
+              <div><label>Персонаж (внизу)</label><input id="hero" type="text" value="🧙‍♂️"></div>
+              <div><label>Крюк</label><input id="hook" type="text" value="⚓"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="right">
+        <div class="toolbar">
+          <button class="btn ghost" id="btnPreview">Обновить превью</button>
+          <button class="btn primary" id="btnPublish">Сгенерировать игру</button>
+          <button class="btn ghost" id="btnGet">Получить код</button>
+          <div class="status" id="statusPill">Готово</div>
+        </div>
+
+        <div class="previewOuter">
+          <iframe id="preview"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Скопировано!</div>
+
+<script>
+  // --- ПАРОЛЬ ---
+  const ACCESS_PASSWORD = "WITCHY-2026";
+  document.getElementById('passBtn').onclick = () => {
+    if(document.getElementById('passInput').value === ACCESS_PASSWORD) {
+      document.body.classList.remove("locked");
+    } else {
+      document.getElementById('passErr').style.display = "block";
+    }
+  };
+
+  // --- НАСТРОЙКИ СЕРВЕРА ---
+  // ВАЖНО: ЗАМЕНИ BASE_MAIN НА ССЫЛКУ, ГДЕ БУДЕТ ЛЕЖАТЬ ТВОЙ main.html (из первого куска кода)
+  const BASE_MAIN = "https://nikashum93.github.io/miner/main.html"; 
+  const ENDPOINT = "https://server-kjnn.onrender.com/publish";
+  const PUBLISH_KEY = "nika_read_pub_2025";
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1400);
+  }
+
+  // --- СБОР ДАННЫХ ---
+  function parseLines(val) { return String(val).split('\n').map(s=>s.replace(/\r/g,'')); }
+  
+  function collectConfig() {
+    const qLines = parseLines(document.getElementById('q_col').value);
+    const cLines = parseLines(document.getElementById('c_col').value);
+    const wLines = parseLines(document.getElementById('w_col').value);
+    
+    const tasks = [];
+    const n = Math.max(qLines.length, cLines.length, wLines.length);
+    for(let i=0; i<n; i++) {
+      const q = (qLines[i]||'').trim();
+      const c = (cLines[i]||'').trim();
+      const w = (wLines[i]||'').trim();
+      if(!q && !c && !w) continue;
+      
+      tasks.push({
+        q: q || '...',
+        correct: (c ? c.split('|') : ['Да']).map(s=>s.trim()),
+        wrong: (w ? w.split(/\||,/) : ['Нет']).map(s=>s.trim())
+      });
+    }
+
+    return {
+      ui: {
+        title: document.getElementById('ui_title').value || "QUIZ MINER",
+        win: document.getElementById('ui_win').value || "КВИЗ ПРОЙДЕН!",
+        start: document.getElementById('ui_start').value || "СТАРТ",
+        again: document.getElementById('ui_again').value || "ЕЩЁ РАЗ"
+      },
+      assets: {
+        hero: document.getElementById('hero').value || "🧙‍♂️",
+        hook: document.getElementById('hook').value || "⚓"
+      },
+      gameplay: { hookSpeed: 15, swingSpeed: 0.04 },
+      tasks: tasks
+    };
+  }
+
+  function makeId() { return `miner-${Date.now()}`; }
+
+  // --- ПРЕВЬЮ ---
+  function refreshPreview() {
+    const cfg = collectConfig();
+    const pr = document.getElementById('preview');
+    pr.src = BASE_MAIN + "?preview=1";
+    pr.onload = () => {
+      pr.contentWindow.postMessage({ type: 'MINER_CFG', cfg }, '*');
+    };
+  }
+
+  // --- ПУБЛИКАЦИЯ ---
+  let lastIframe = "";
+  async function publish() {
+    const cfg = collectConfig();
+    if(cfg.tasks.length === 0) return alert("Добавь хотя бы одно задание!");
+
+    document.getElementById('statusPill').textContent = 'Создаю…';
+    const id = makeId();
+    
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Publish-Key": PUBLISH_KEY },
+        body: JSON.stringify({ id, mode: "json", folder: "data", content: JSON.stringify(cfg, null, 2) })
+      });
+
+      if(!res.ok) throw new Error("Server error");
+
+      lastIframe = `<iframe src="${BASE_MAIN}?id=${id}" width="100%" height="650" style="border:0;" allow="fullscreen"></iframe>`;
+      document.getElementById('statusPill').textContent = 'Готово ✅';
+      toast('Игра создана ✅');
+    } catch(e) {
+      document.getElementById('statusPill').textContent = 'Ошибка';
+      alert('Ошибка публикации: ' + e.message);
+    }
+  }
+
+  // --- ВКЛАДКИ И СОБЫТИЯ ---
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tabPanel').forEach(p => p.classList.remove('active'));
+      t.classList.add('active');
+      document.querySelector(`.tabPanel[data-panel="${t.dataset.tab}"]`).classList.add('active');
+    };
+  });
+
+  document.getElementById('btnPreview').onclick = refreshPreview;
+  document.getElementById('btnPublish').onclick = publish;
+  document.getElementById('btnGet').onclick = () => {
+    if(!lastIframe) return toast("Сначала сгенерируй игру!");
+    navigator.clipboard.writeText(lastIframe).then(()=>toast("Скопировано!"));
+  };
+
+  document.addEventListener('input', (e) => {
+    if(e.target.closest('.wrap')) setTimeout(refreshPreview, 300);
+  });
+
+</script>
 </body>
 </html>

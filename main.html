@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Quiz Miner</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&family=Nunito:wght@700&family=Russo+One&family=Pacifico&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
@@ -50,7 +50,7 @@
       color: #111; padding: 15px 30px; border-radius: 20px;
       font-size: 4.5vmin; font-weight: bold; display: inline-block;
       box-shadow: 0 8px 15px rgba(0,0,0,0.3); max-width: 80%;
-      margin-top: 10px; transition: background 0.3s;
+      margin-top: 10px; transition: all 0.3s;
     }
 
     canvas { display: block; width: 100%; height: 100%; }
@@ -102,7 +102,7 @@
 
   <div id="end-screen" class="overlay" style="display:none;">
     <h1 style="font-size: 15vmin; text-shadow:none;" id="end-emoji">🏆</h1>
-    <h1 id="end-title">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
+    <h1 id="end-title" style="font-family: inherit;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
     <p style="font-size: 6vmin; font-weight: bold; color:#00ffcc;" id="end-score">Счёт: 0</p>
     <button class="btn" id="btnAgain">ЕЩЁ РАЗ</button>
   </div>
@@ -118,11 +118,13 @@
   let CFG = {
     ui: { title: "QUIZ MINER", start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!" },
     visual: { 
-      hero: "🧙‍♂️", hook: "⚓", target: "", 
+      hero: "🧙‍♂️", hook: "⚓", targets: ["🍔"], 
       ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
-      heroSize: 120, heroYOffset: 80, hookSize: 50, hookOffsetY: 0
+      heroSize: 150, hookSize: 60, hookOffsetY: 0, targetSize: 90,
+      fontFamily: "Montserrat", qColor: "#111111", qGlow: "#000000", qSize: 4.5,
+      tColor: "#000000", tGlow: "#000000", tSize: 22
     },
-    gameplay: { hookSpeed: 9, swingSpeed: 0.035 }, 
+    gameplay: { hookSpeed: 10, swingSpeed: 0.035 }, 
     tasks: [] 
   };
 
@@ -152,15 +154,21 @@
     document.getElementById('uiTitle').textContent = CFG.ui.title || "QUIZ MINER";
     document.getElementById('btnStart').textContent = CFG.ui.start || "СТАРТ";
     document.getElementById('btnAgain').textContent = CFG.ui.again || "ЕЩЁ РАЗ";
+    
+    // Настройка шрифтов и цветов коробки с вопросом
     const qb = document.getElementById('question-text');
     qb.style.background = CFG.visual.qBoxColor;
+    qb.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
+    qb.style.color = CFG.visual.qColor || "#111111";
+    qb.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
     
-    const hex = CFG.visual.qBoxColor.replace('#', '');
-    if(hex.length === 6) {
-        const r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
-        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-        qb.style.color = (yiq >= 128) ? '#111' : '#fff';
+    if(CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") {
+        qb.style.textShadow = `0 0 10px ${CFG.visual.qGlow}`;
+    } else {
+        qb.style.textShadow = 'none';
     }
+
+    document.getElementById('game-app').style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
   }
 
   const canvas = document.getElementById('gameCanvas');
@@ -170,45 +178,60 @@
   resize();
 
   const imgCache = {};
-  function renderEntity(val, x, y, defaultSize, isTarget = false, targetW = 0, targetH = 0) {
+  function renderEntity(val, x, y, size) {
     if (!val) return false;
     if (val.startsWith('http') || val.endsWith('.png') || val.endsWith('.jpg') || val.endsWith('.gif') || val.startsWith('data:image')) {
       if (!imgCache[val]) {
-        const img = new Image(); img.src = val; imgCache[val] = img;
+        const img = new Image(); 
+        img.crossOrigin = "Anonymous"; // Фикс для CORS (чтобы картинки с Github грузились на Canvas)
+        img.src = val; 
+        imgCache[val] = img;
       }
       if (imgCache[val].complete && imgCache[val].naturalWidth > 0) {
-        const w = isTarget ? targetW : defaultSize;
-        const h = isTarget ? targetH : defaultSize;
-        ctx.drawImage(imgCache[val], x - w/2, y - h/2, w, h);
+        ctx.drawImage(imgCache[val], x - size/2, y - size/2, size, size);
         return true; 
       }
     } else {
-      ctx.font = `${defaultSize}px Arial`;
+      ctx.font = `${size}px "${CFG.visual.fontFamily}", sans-serif`;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(val, x, y);
       return false; 
     }
   }
 
-  // Отрисовка цепи
+  // Отрисовка 3D цепи
   function drawChain(x1, y1, x2, y2, color) {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const dist = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx);
-    const linkLength = 15;
+    const linkLength = 18; // Длина звена
     const numLinks = Math.max(1, Math.floor(dist / linkLength));
 
     ctx.save();
     ctx.translate(x1, y1);
     ctx.rotate(angle);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
 
     for (let i = 0; i < numLinks; i++) {
+      // Темная подложка (эффект тени)
       ctx.beginPath();
-      // Рисуем звено как вытянутый овал
-      ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 5, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 5;
+      ctx.stroke();
+
+      // Цветное звено
+      ctx.beginPath();
+      ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 5, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Блик (придает объем)
+      ctx.beginPath();
+      ctx.ellipse(i * linkLength + linkLength/2 - 1, -1, linkLength/2 - 2, 2, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(255,255,255,0.7)";
+      ctx.lineWidth = 1;
       ctx.stroke();
     }
     ctx.restore();
@@ -221,11 +244,11 @@
     combo: 1.0,
     currentTaskIndex: 0,
     targets: [],
-    hook: { x: 0, y: 0, angle: 0, length: 60, maxLength: 1000, time: 0, caughtTarget: null },
+    hook: { x: 0, y: 0, angle: 0, length: 80, maxLength: 1000, time: 0, caughtTarget: null },
 
     reset() {
       this.score = 0; this.combo = 1.0; this.currentTaskIndex = 0;
-      this.state = 'idle'; this.hookState = 'swinging'; this.hook.length = 60; this.targets = [];
+      this.state = 'idle'; this.hookState = 'swinging'; this.hook.length = 80; this.targets = [];
       document.getElementById('start-screen').style.display = 'flex';
       document.getElementById('ui-layer').style.display = 'none';
       document.getElementById('end-screen').style.display = 'none';
@@ -264,9 +287,13 @@
       this.targets = [];
       let allAnswers = [ { text: task.correct[0] || "Да", isCorrect: true } ];
       (task.wrong || []).forEach(w => { if(w.trim()) allAnswers.push({ text: w.trim(), isCorrect: false }); });
-      allAnswers.sort(() => Math.random() - 0.5);
+      allAnswers.sort(() => Math.random() - 0.5); // Перемешиваем варианты
 
-      const targetW = 140, targetH = 60;
+      // Берем картинки мишеней, если их нет - ставим бургер
+      const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : ["🍔"];
+      assetsList.sort(() => Math.random() - 0.5); // Перемешиваем визуал мишеней
+
+      const targetW = CFG.visual.targetSize || 90;
       const rowCapacity = Math.max(2, Math.ceil(allAnswers.length / 2)); 
       const zoneWidth = canvas.width / rowCapacity; 
 
@@ -277,11 +304,13 @@
         const maxX = (col + 1) * zoneWidth - targetW/2 - 20;
         
         this.targets.push({
-          text: ans.text, isCorrect: ans.isCorrect,
+          text: ans.text, 
+          isCorrect: ans.isCorrect,
+          asset: assetsList[i % assetsList.length], // Назначаем рандомную картинку каждому ответу
           minX: minX, maxX: maxX,
           x: minX + Math.random() * (maxX - minX),
-          y: canvas.height * 0.25 + (row * 100),
-          w: targetW, h: targetH,
+          y: canvas.height * 0.25 + (row * 120),
+          w: targetW, h: targetW,
           speed: (Math.random() * 1.5 + 1.0) * (Math.random() > 0.5 ? 1 : -1) 
         });
       });
@@ -299,11 +328,12 @@
     update() {
       if (this.state !== 'playing') return;
 
-      const speed = CFG.gameplay.hookSpeed || 9;
+      const speed = CFG.gameplay.hookSpeed || 10;
       const swingSpeed = CFG.gameplay.swingSpeed || 0.035;
       
       this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80) + (CFG.visual.hookOffsetY || 0);
+      // Привязка позиции к персонажу снизу
+      this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
 
       this.targets.forEach(t => {
         t.x += t.speed;
@@ -322,15 +352,15 @@
 
         for (let i = 0; i < this.targets.length; i++) {
           let t = this.targets[i];
-          // Если произошло касание мишени
+          // Если произошло касание
           if (Math.abs(hx - t.x) < t.w/2 && Math.abs(hy - t.y) < t.h/2) {
-            this.hookState = 'retracting'; // СРАЗУ тащим обратно
-            this.hook.caughtTarget = t;
+            this.hookState = 'retracting';
+            this.hook.caughtTarget = t; // Привязываем мишень к крюку намертво!
             this.targets.splice(i, 1); 
             break;
           }
         }
-        // Если пролетел мимо всех мишеней
+        // Если пролетел мимо
         if (this.hook.length > this.hook.maxLength) {
            this.hookState = 'retracting';
            this.combo = 1.0; 
@@ -338,23 +368,22 @@
         }
       } 
       else if (this.hookState === 'retracting') {
-        this.hook.length -= speed * 1.5; // Сматываем быстрее, чем стреляли
+        this.hook.length -= speed * 1.5; 
         
+        // Тащим мишень синхронно с крюком
         if (this.hook.caughtTarget) {
           this.hook.caughtTarget.x = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
           this.hook.caughtTarget.y = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
-          // Временно добавляем обратно в список для отрисовки
-          this.targets.push(this.hook.caughtTarget);
-          this.hook.caughtTarget = null;
         }
 
+        // Крюк вернулся к персонажу
         if (this.hook.length <= 80) {
           this.hookState = 'swinging'; 
           this.hook.length = 80;
           
-          let caughtIndex = this.targets.findIndex(t => t.y > canvas.height - 200);
-          if (caughtIndex !== -1) {
-            let caught = this.targets[caughtIndex];
+          if (this.hook.caughtTarget) {
+            let caught = this.hook.caughtTarget;
+            this.hook.caughtTarget = null; // Отцепляем
             
             if (caught.isCorrect) {
               let pts = Math.floor(100 * this.combo);
@@ -371,8 +400,9 @@
               this.spawnFloaty("Промах!", this.hook.x, this.hook.y - 120, '#e74c3c');
               document.getElementById('question-text').textContent = "Ой! Не та мишень!";
               
-              // Возвращаем мишень наверх
+              // Возвращаем мишень обратно на поле
               caught.y = canvas.height * 0.25; 
+              this.targets.push(caught);
               setTimeout(() => this.loadTask(), 1200);
             }
           }
@@ -380,41 +410,56 @@
       }
     },
 
+    drawTargetEl(t) {
+        // Рисуем картинку мишени или эмодзи
+        renderEntity(t.asset, t.x, t.y, CFG.visual.targetSize || 90);
+
+        // Расчет рамки для текста над мишенью
+        ctx.font = `bold ${CFG.visual.tSize || 22}px "${CFG.visual.fontFamily}", sans-serif`;
+        const textMet = ctx.measureText(t.text);
+        const tw = textMet.width + 24;
+        const th = (CFG.visual.tSize || 22) + 14;
+        const textY = t.y - (CFG.visual.targetSize || 90)/2 - th/2 - 8;
+
+        // Рисуем матовую подложку (стекло)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 10); ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.lineWidth = 2; ctx.stroke();
+
+        // Рисуем текст с эффектами
+        if (CFG.visual.tGlow && CFG.visual.tGlow !== "#000000") {
+          ctx.shadowColor = CFG.visual.tGlow;
+          ctx.shadowBlur = 8;
+        }
+        ctx.fillStyle = CFG.visual.tColor || '#000000';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(t.text, t.x, textY);
+        ctx.shadowBlur = 0; // Сбрасываем тень
+    },
+
     draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      this.targets.forEach(t => {
-        let hasImage = false;
-        if(CFG.visual.target) {
-            hasImage = renderEntity(CFG.visual.target, t.x, t.y, t.w, true, t.w, t.h);
-        }
-        
-        if(!hasImage) {
-            ctx.fillStyle = 'rgba(30,30,30,0.8)';
-            ctx.beginPath(); ctx.roundRect(t.x - t.w/2, t.y - t.h/2, t.w, t.h, 10); ctx.fill();
-            ctx.strokeStyle = CFG.visual.ropeColor; ctx.lineWidth = 2; ctx.stroke();
-        }
-        
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Montserrat';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(t.text, t.x, t.y);
-      });
+      // Отрисовка свободных мишеней
+      this.targets.forEach(t => this.drawTargetEl(t));
+      // Отрисовка пойманной мишени (если есть)
+      if (this.hook.caughtTarget) this.drawTargetEl(this.hook.caughtTarget);
 
       this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80) + (CFG.visual.hookOffsetY || 0);
+      this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
       const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
       const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
 
-      // ЦЕПЬ
+      // 3D-ЦЕПЬ
       drawChain(this.hook.x, this.hook.y, hx, hy, CFG.visual.ropeColor || "#bdc3c7");
 
       // Крюк
-      renderEntity(CFG.visual.hook || "⚓", hx, hy, CFG.visual.hookSize || 50);
+      renderEntity(CFG.visual.hook || "⚓", hx, hy, CFG.visual.hookSize || 60);
 
       // Персонаж
       const heroX = canvas.width / 2;
-      const heroY = canvas.height - (CFG.visual.heroYOffset || 80);
-      renderEntity(CFG.visual.hero || "🧙‍♂️", heroX, heroY, CFG.visual.heroSize || 120);
+      const heroY = canvas.height - (CFG.visual.heroSize || 150)/2; // Центр снизу
+      renderEntity(CFG.visual.hero || "🧙‍♂️", heroX, heroY, CFG.visual.heroSize || 150);
     },
 
     loop() {

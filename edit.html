@@ -6,15 +6,10 @@
   <title>Quiz Miner — Редактор</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    /* Базовые стили скопированы из твоего оригинала, чтобы всё выглядело так же */
     html,body{height:100%;}
     :root{
-      --primary:#f39c12;
-      --accent:#e74c3c;
-      --glass:rgba(255,255,255,0.95);
-      --bg1:#2c3e50;
-      --bg2:#1a252f;
-      --stroke:rgba(0,0,0,.10);
+      --primary:#f39c12; --accent:#e74c3c; --glass:rgba(255,255,255,0.95);
+      --bg1:#2c3e50; --bg2:#1a252f; --stroke:rgba(0,0,0,.10);
     }
     *{box-sizing:border-box}
     body{
@@ -48,10 +43,11 @@
     .brandTitle .mini{ font-weight:900; color:var(--accent); font-size:12px; text-transform:uppercase; }
     
     label{font-weight:800; font-size:12px; text-transform:uppercase; color:#444; display:block; margin-bottom:5px;}
-    input[type=text],textarea{
+    input[type=text], input[type=color], input[type=range], textarea{
       width:100%; padding:10px; border-radius:12px; border:2px solid #ddd;
       font-family:'Montserrat',sans-serif; outline:none; transition:.15s;
     }
+    input[type=color] { height: 40px; cursor: pointer; padding: 2px; }
     textarea{ min-height:120px; resize:vertical; }
     input:focus,textarea:focus{ border-color:var(--primary); }
 
@@ -64,7 +60,7 @@
     .tabPanel{display:none} .tabPanel.active{display:block}
     .tab.active{ background:#fff; border-bottom-color:transparent; }
 
-    .main{ flex:1; min-height:0; display:grid; grid-template-columns: 420px 1fr; gap:14px; padding:14px 18px; }
+    .main{ flex:1; min-height:0; display:grid; grid-template-columns: 450px 1fr; gap:14px; padding:14px 18px; }
     .left{ overflow:auto; padding-right:6px; }
     .right{ display:flex; flex-direction:column; gap:10px; }
     
@@ -93,7 +89,6 @@
     }
     .toast.show{ opacity:1; }
 
-    /* Пароль */
     .pass-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.86); display:none; align-items:center; justify-content:center; z-index:110000; }
     body.locked .pass-overlay{ display:flex; }
     body.locked .wrap { display:none; }
@@ -129,7 +124,8 @@
 
       <div class="tabbar" id="tabs">
         <button class="tab active" data-tab="tasks">Задания</button>
-        <button class="tab" data-tab="settings">Настройки и Графика</button>
+        <button class="tab" data-tab="settings">Интерфейс</button>
+        <button class="tab" data-tab="visual">Графика</button>
       </div>
     </div>
 
@@ -150,7 +146,7 @@
 
         <div class="tabPanel" data-panel="settings">
           <div class="card">
-            <h2>⚙️ Интерфейс</h2>
+            <h2>⚙️ Тексты кнопок</h2>
             <div class="grid2">
               <div><label>Заголовок игры</label><input id="ui_title" type="text" value="QUIZ MINER"></div>
               <div><label>Текст победы</label><input id="ui_win" type="text" value="КВИЗ ПРОЙДЕН!"></div>
@@ -158,11 +154,32 @@
               <div><label>Кнопка Повтор</label><input id="ui_again" type="text" value="ЕЩЁ РАЗ"></div>
             </div>
           </div>
+        </div>
+
+        <div class="tabPanel" data-panel="visual">
           <div class="card">
-            <h2>🎨 Графика (Эмодзи)</h2>
+            <h2>🎨 Изображения (Ссылки)</h2>
+            <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif).</p>
+            <div class="qStack">
+              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="https://nikashum93.github.io/hk/hero.png"></div>
+              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="https://nikashum93.github.io/hk/hook.png"></div>
+              <div><label>Мишень (Target)</label><input id="img_target" type="text" value="https://nikashum93.github.io/hk/target.png"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>✨ Стили и Размеры</h2>
             <div class="grid2">
-              <div><label>Персонаж (внизу)</label><input id="hero" type="text" value="🧙‍♂️"></div>
-              <div><label>Крюк</label><input id="hook" type="text" value="⚓"></div>
+              <div><label>Цвет неоновой веревки</label><input id="color_rope" type="color" value="#00ffcc"></div>
+              <div><label>Фон вопроса</label><input id="color_qbox" type="color" value="#ffffff"></div>
+              <div>
+                <label>Размер персонажа</label>
+                <input id="hero_size" type="range" min="40" max="200" value="120">
+              </div>
+              <div>
+                <label>Позиция персонажа (Y)</label>
+                <input id="hero_y" type="range" min="0" max="200" value="80">
+              </div>
             </div>
           </div>
         </div>
@@ -187,7 +204,6 @@
   <div class="toast" id="toast">Скопировано!</div>
 
 <script>
-  // --- ПАРОЛЬ ---
   const ACCESS_PASSWORD = "WITCHY-2026";
   document.getElementById('passBtn').onclick = () => {
     if(document.getElementById('passInput').value === ACCESS_PASSWORD) {
@@ -197,9 +213,7 @@
     }
   };
 
-  // --- НАСТРОЙКИ СЕРВЕРА ---
-  // ВАЖНО: ЗАМЕНИ BASE_MAIN НА ССЫЛКУ, ГДЕ БУДЕТ ЛЕЖАТЬ ТВОЙ main.html (из первого куска кода)
-  const BASE_MAIN = "https://nikashum93.github.io/hk/main.html"; 
+  const BASE_MAIN = "https://nikashum93.github.io/miner/main.html"; // Твоя ссылка на main
   const ENDPOINT = "https://server-kjnn.onrender.com/publish";
   const PUBLISH_KEY = "nika_read_pub_2025";
 
@@ -209,7 +223,6 @@
     setTimeout(()=>t.classList.remove('show'), 1400);
   }
 
-  // --- СБОР ДАННЫХ ---
   function parseLines(val) { return String(val).split('\n').map(s=>s.replace(/\r/g,'')); }
   
   function collectConfig() {
@@ -239,18 +252,22 @@
         start: document.getElementById('ui_start').value || "СТАРТ",
         again: document.getElementById('ui_again').value || "ЕЩЁ РАЗ"
       },
-      assets: {
-        hero: document.getElementById('hero').value || "🧙‍♂️",
-        hook: document.getElementById('hook').value || "⚓"
+      visual: {
+        hero: document.getElementById('img_hero').value || "🧙‍♂️",
+        hook: document.getElementById('img_hook').value || "⚓",
+        target: document.getElementById('img_target').value || "",
+        ropeColor: document.getElementById('color_rope').value || "#00ffcc",
+        qBoxColor: document.getElementById('color_qbox').value || "#ffffff",
+        heroSize: parseInt(document.getElementById('hero_size').value) || 120,
+        heroYOffset: parseInt(document.getElementById('hero_y').value) || 80
       },
-      gameplay: { hookSpeed: 15, swingSpeed: 0.04 },
+      gameplay: { hookSpeed: 7, swingSpeed: 0.035 }, // Замедляем движение крюка!
       tasks: tasks
     };
   }
 
   function makeId() { return `miner-${Date.now()}`; }
 
-  // --- ПРЕВЬЮ ---
   function refreshPreview() {
     const cfg = collectConfig();
     const pr = document.getElementById('preview');
@@ -260,7 +277,6 @@
     };
   }
 
-  // --- ПУБЛИКАЦИЯ ---
   let lastIframe = "";
   async function publish() {
     const cfg = collectConfig();
@@ -287,7 +303,6 @@
     }
   }
 
-  // --- ВКЛАДКИ И СОБЫТИЯ ---
   document.querySelectorAll('.tab').forEach(t => {
     t.onclick = () => {
       document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));

@@ -118,7 +118,7 @@
   let CFG = {
     ui: { title: "QUIZ MINER", start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!" },
     visual: { 
-      hero: "🧙‍♂️", hook: "⚓", targets: ["🍔"], 
+      hero: "hero.png", hook: "hook.png", targets: ["target.png"], 
       ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
       heroSize: 150, hookSize: 60, hookOffsetY: 0, targetSize: 90,
       fontFamily: "Montserrat", qColor: "#111111", qGlow: "#000000", qSize: 4.5,
@@ -183,7 +183,7 @@
     if (val.startsWith('http') || val.endsWith('.png') || val.endsWith('.jpg') || val.endsWith('.gif') || val.startsWith('data:image')) {
       if (!imgCache[val]) {
         const img = new Image(); 
-        img.crossOrigin = "Anonymous"; // Фикс для CORS (чтобы картинки с Github грузились на Canvas)
+        img.crossOrigin = "Anonymous"; // Фикс для CORS
         img.src = val; 
         imgCache[val] = img;
       }
@@ -205,7 +205,7 @@
     const dy = y2 - y1;
     const dist = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx);
-    const linkLength = 18; // Длина звена
+    const linkLength = 18; 
     const numLinks = Math.max(1, Math.floor(dist / linkLength));
 
     ctx.save();
@@ -289,8 +289,7 @@
       (task.wrong || []).forEach(w => { if(w.trim()) allAnswers.push({ text: w.trim(), isCorrect: false }); });
       allAnswers.sort(() => Math.random() - 0.5); // Перемешиваем варианты
 
-      // Берем картинки мишеней, если их нет - ставим бургер
-      const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : ["🍔"];
+      const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : ["target.png"];
       assetsList.sort(() => Math.random() - 0.5); // Перемешиваем визуал мишеней
 
       const targetW = CFG.visual.targetSize || 90;
@@ -454,12 +453,12 @@
       drawChain(this.hook.x, this.hook.y, hx, hy, CFG.visual.ropeColor || "#bdc3c7");
 
       // Крюк
-      renderEntity(CFG.visual.hook || "⚓", hx, hy, CFG.visual.hookSize || 60);
+      renderEntity(CFG.visual.hook || "hook.png", hx, hy, CFG.visual.hookSize || 60);
 
       // Персонаж
       const heroX = canvas.width / 2;
       const heroY = canvas.height - (CFG.visual.heroSize || 150)/2; // Центр снизу
-      renderEntity(CFG.visual.hero || "🧙‍♂️", heroX, heroY, CFG.visual.heroSize || 150);
+      renderEntity(CFG.visual.hero || "hero.png", heroX, heroY, CFG.visual.heroSize || 150);
     },
 
     loop() {

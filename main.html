@@ -10,12 +10,12 @@
 
   <style>
     * { box-sizing: border-box; }
-    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#2c3e50; }
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#111; }
     
     #game-app {
       width: 100%; height: 100%;
       display: flex; flex-direction: column;
-      background: linear-gradient(to bottom, #3498db, #2c3e50);
+      background: radial-gradient(circle at bottom, #2c3e50, #0a0a0a);
       font-family: 'Montserrat', sans-serif;
       user-select: none;
       position: relative;
@@ -34,34 +34,48 @@
     }
 
     .progress-box {
-      width: 50%; height: 16px; background: rgba(0,0,0,0.3);
+      width: 40%; height: 16px; background: rgba(0,0,0,0.5);
       border-radius: 8px; border: 2px solid #fff; overflow: hidden;
     }
-    .progress-fill { width: 0%; height: 100%; background: #2ecc71; transition: width 0.3s; }
-    .score-box { font-size: 4vmin; font-family: 'Fredoka One', cursive; text-shadow: 2px 2px 0 rgba(0,0,0,0.3); }
+    .progress-fill { width: 0%; height: 100%; background: #00ffcc; transition: width 0.3s; box-shadow: 0 0 10px #00ffcc;}
+    
+    .score-box { 
+      font-size: 3.5vmin; font-family: 'Fredoka One', cursive; text-shadow: 2px 2px 0 rgba(0,0,0,0.5); 
+      display:flex; flex-direction: column; align-items: flex-end;
+    }
+    .combo-badge { font-size: 2.5vmin; color: #f1c40f; }
 
     .question-box {
       background: rgba(255, 255, 255, 0.95);
-      color: #333; padding: 15px 30px; border-radius: 20px;
-      font-size: 5vmin; font-weight: bold; display: inline-block;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.15); max-width: 80%;
-      margin-top: 10px;
+      color: #111; padding: 15px 30px; border-radius: 20px;
+      font-size: 4.5vmin; font-weight: bold; display: inline-block;
+      box-shadow: 0 8px 15px rgba(0,0,0,0.3); max-width: 80%;
+      margin-top: 10px; transition: background 0.3s;
     }
 
     canvas { display: block; width: 100%; height: 100%; }
 
     .overlay {
-      position: absolute; inset: 0; z-index: 100; background: rgba(44, 62, 80, 0.95);
+      position: absolute; inset: 0; z-index: 100; background: rgba(10, 10, 10, 0.95);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       color: white; text-align: center;
     }
-    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 6px 0 rgba(0,0,0,0.2); }
+    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 15px rgba(0,255,204,0.5); }
     .btn {
-      background: #f1c40f; color: #d35400; font-size: 6vmin; padding: 15px 50px;
-      border-radius: 40px; border: none; border-bottom: 8px solid #f39c12;
+      background: #00ffcc; color: #111; font-size: 5vmin; padding: 15px 50px;
+      border-radius: 40px; border: none; border-bottom: 8px solid #00b38f;
       cursor: pointer; font-family: 'Fredoka One', cursive; margin-top: 30px; pointer-events: auto;
+      transition: transform 0.1s;
     }
     .btn:active { transform: translateY(4px); border-bottom-width: 4px; }
+    
+    /* Анимация всплывающих очков */
+    .floating-text {
+      position: absolute; font-family: 'Fredoka One', cursive;
+      font-size: 4vmin; color: #00ffcc; text-shadow: 0 0 10px #00ffcc;
+      pointer-events: none; z-index: 50; animation: floatUp 1s ease-out forwards;
+    }
+    @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.5); opacity: 0; } }
   </style>
 </head>
 <body>
@@ -70,12 +84,16 @@
   <div class="ui-layer" id="ui-layer" style="display:none;">
     <div class="top-bar">
       <div class="progress-box"><div class="progress-fill" id="progress-fill"></div></div>
-      <div class="score-box">Очки: <span id="score-display">0</span></div>
+      <div class="score-box">
+        <div>Очки: <span id="score-display">0</span></div>
+        <div class="combo-badge">Комбо: x<span id="combo-display">1.0</span></div>
+      </div>
     </div>
     <div class="question-box" id="question-text">Загрузка...</div>
   </div>
 
   <canvas id="gameCanvas"></canvas>
+  <div id="floaty-container"></div>
 
   <div id="start-screen" class="overlay">
     <h1 id="uiTitle">QUIZ MINER</h1>
@@ -84,33 +102,34 @@
   </div>
 
   <div id="end-screen" class="overlay" style="display:none;">
-    <h1 style="font-size: 15vmin;" id="end-emoji">🏆</h1>
+    <h1 style="font-size: 15vmin; text-shadow:none;" id="end-emoji">🏆</h1>
     <h1 id="end-title">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
-    <p style="font-size: 6vmin; font-weight: bold;" id="end-score">Счёт: 0</p>
+    <p style="font-size: 6vmin; font-weight: bold; color:#00ffcc;" id="end-score">Счёт: 0</p>
     <button class="btn" id="btnAgain">ЕЩЁ РАЗ</button>
   </div>
 </div>
 
 <script>
-  // --- НАСТРОЙКИ СВЯЗИ И ПРЕВЬЮ ---
   const urlParams = new URLSearchParams(location.search);
   const cfgId = urlParams.get('id');
   const previewMode = urlParams.get('preview') === '1';
 
-  // Базы данных GitHub
   const JSON_BASES = ["https://nikashum93.github.io/texts/data/", "https://nikashum93.github.io/data/"];
 
   let CFG = {
     ui: { title: "QUIZ MINER", start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!" },
-    assets: { hero: "🧙‍♂️", hook: "⚓" },
-    gameplay: { hookSpeed: 15, swingSpeed: 0.04 },
-    tasks: [] // {q: "2+2", correct: ["4"], wrong: ["3","5"]}
+    visual: { 
+      hero: "🧙‍♂️", hook: "⚓", target: "", 
+      ropeColor: "#00ffcc", qBoxColor: "#ffffff",
+      heroSize: 120, heroYOffset: 80 
+    },
+    gameplay: { hookSpeed: 7, swingSpeed: 0.035 }, // Медленный крюк
+    tasks: [] 
   };
 
-  // --- ЛОГИКА ЗАГРУЗКИ ---
   window.addEventListener('message', (e) => {
     if (e.data && e.data.type === 'MINER_CFG') {
-      CFG = e.data.cfg;
+      CFG = Object.assign({}, CFG, e.data.cfg);
       applyUI();
       if(Game.state === 'idle') Game.reset();
     }
@@ -125,46 +144,66 @@
         try { res = await fetch(`${base}${encodeURIComponent(cfgId)}.json?v=${Date.now()}`); if (res.ok) break; } catch(e){}
       }
       if (res && res.ok) {
-        const data = await res.json();
-        CFG = Object.assign({}, CFG, data);
-      } else throw new Error();
-    } catch (e) {
-      document.getElementById('cfgNote').textContent = '⚠️ Конфиг не найден: ' + cfgId;
-    }
+        CFG = Object.assign({}, CFG, await res.json());
+      }
+    } catch (e) { document.getElementById('cfgNote').textContent = '⚠️ Конфиг не найден'; }
   }
 
   function applyUI() {
     document.getElementById('uiTitle').textContent = CFG.ui.title || "QUIZ MINER";
     document.getElementById('btnStart').textContent = CFG.ui.start || "СТАРТ";
     document.getElementById('btnAgain').textContent = CFG.ui.again || "ЕЩЁ РАЗ";
+    const qb = document.getElementById('question-text');
+    qb.style.background = CFG.visual.qBoxColor;
+    
+    // Вычисляем яркость фона, чтобы текст не сливался (черный/белый)
+    const hex = CFG.visual.qBoxColor.replace('#', '');
+    if(hex.length === 6) {
+        const r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
+        const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+        qb.style.color = (yiq >= 128) ? '#111' : '#fff';
+    }
   }
 
-  // --- ИГРОВОЙ ДВИЖОК CANVAS ---
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
-
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
+  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
   window.addEventListener('resize', resize);
   resize();
 
+  // Кэш для картинок, чтобы не моргало
+  const imgCache = {};
+  function renderEntity(val, x, y, defaultSize, isTarget = false, targetW = 0, targetH = 0) {
+    if (val.startsWith('http') || val.endsWith('.png') || val.endsWith('.jpg') || val.endsWith('.gif') || val.startsWith('data:image')) {
+      if (!imgCache[val]) {
+        const img = new Image(); img.src = val; imgCache[val] = img;
+      }
+      if (imgCache[val].complete && imgCache[val].naturalWidth > 0) {
+        const w = isTarget ? targetW : defaultSize;
+        const h = isTarget ? targetH : defaultSize;
+        ctx.drawImage(imgCache[val], x - w/2, y - h/2, w, h);
+        return true; // Картинка отрисована
+      }
+    } else {
+      ctx.font = `${defaultSize}px Arial`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(val, x, y);
+      return false; // Это был текст/эмодзи
+    }
+  }
+
   const Game = {
-    state: 'idle', // idle, playing, gameover
-    hookState: 'swinging', // swinging, shooting, retracting
+    state: 'idle',
+    hookState: 'swinging',
     score: 0,
+    combo: 1.0,
     currentTaskIndex: 0,
     targets: [],
     hook: { x: 0, y: 0, angle: 0, length: 60, maxLength: 1000, time: 0, caughtTarget: null },
 
     reset() {
-      this.score = 0;
-      this.currentTaskIndex = 0;
-      this.state = 'idle';
-      this.hookState = 'swinging';
-      this.hook.length = 60;
-      this.targets = [];
+      this.score = 0; this.combo = 1.0; this.currentTaskIndex = 0;
+      this.state = 'idle'; this.hookState = 'swinging'; this.hook.length = 60; this.targets = [];
       document.getElementById('start-screen').style.display = 'flex';
       document.getElementById('ui-layer').style.display = 'none';
       document.getElementById('end-screen').style.display = 'none';
@@ -173,8 +212,7 @@
 
     start() {
       if(!CFG.tasks || CFG.tasks.length === 0) return alert("Нет заданий!");
-      this.score = 0;
-      this.currentTaskIndex = 0;
+      this.score = 0; this.combo = 1.0; this.currentTaskIndex = 0;
       this.state = 'playing';
       document.getElementById('start-screen').style.display = 'none';
       document.getElementById('ui-layer').style.display = 'block';
@@ -182,41 +220,52 @@
       this.loop();
     },
 
-    loadTask() {
-      if (this.currentTaskIndex >= CFG.tasks.length) {
-        return this.gameOver();
-      }
+    spawnFloaty(text, x, y, color) {
+      const fc = document.getElementById('floaty-container');
+      const el = document.createElement('div');
+      el.className = 'floating-text'; el.textContent = text;
+      el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color; el.style.textShadow = `0 0 10px ${color}`;
+      fc.appendChild(el);
+      setTimeout(() => el.remove(), 1000);
+    },
 
+    loadTask() {
+      if (this.currentTaskIndex >= CFG.tasks.length) return this.gameOver();
+      
       const task = CFG.tasks[this.currentTaskIndex];
       document.getElementById('question-text').textContent = task.q;
       const pct = (this.currentTaskIndex / CFG.tasks.length) * 100;
       document.getElementById('progress-fill').style.width = `${pct}%`;
+      document.getElementById('score-display').textContent = this.score;
+      document.getElementById('combo-display').textContent = this.combo.toFixed(1);
 
       this.targets = [];
-      // Собираем мишени (1 правильная, остальные неправильные)
       let allAnswers = [ { text: task.correct[0] || "Да", isCorrect: true } ];
-      (task.wrong || []).forEach(w => {
-        if(w.trim()) allAnswers.push({ text: w.trim(), isCorrect: false });
-      });
-      
-      // Перемешиваем
+      (task.wrong || []).forEach(w => { if(w.trim()) allAnswers.push({ text: w.trim(), isCorrect: false }); });
       allAnswers.sort(() => Math.random() - 0.5);
 
-      const rows = [canvas.height * 0.25, canvas.height * 0.4]; // Два ряда
-      
+      const targetW = 140, targetH = 60;
+      const rowCapacity = Math.max(2, Math.ceil(allAnswers.length / 2)); 
+      // Жестко выделяем непересекающиеся зоны по ширине экрана
+      const zoneWidth = canvas.width / rowCapacity; 
+
       allAnswers.forEach((ans, i) => {
+        const row = i % 2; // Ряд 0 или 1
+        const col = Math.floor(i / 2); // Колонка
+        const minX = col * zoneWidth + targetW/2 + 20;
+        const maxX = (col + 1) * zoneWidth - targetW/2 - 20;
+        
         this.targets.push({
-          text: ans.text,
-          isCorrect: ans.isCorrect,
-          x: Math.random() * (canvas.width - 200) + 100,
-          y: rows[i % 2],
-          w: 120, h: 50,
-          speed: (Math.random() * 2 + 2) * (Math.random() > 0.5 ? 1 : -1)
+          text: ans.text, isCorrect: ans.isCorrect,
+          minX: minX, maxX: maxX,
+          x: minX + Math.random() * (maxX - minX),
+          y: canvas.height * 0.25 + (row * 100),
+          w: targetW, h: targetH,
+          speed: (Math.random() * 1.5 + 1.0) * (Math.random() > 0.5 ? 1 : -1) // Плавное движение
         });
       });
 
-      this.hookState = 'swinging';
-      this.hook.length = 60;
+      this.hookState = 'swinging'; this.hook.length = 80;
     },
 
     shoot() {
@@ -229,16 +278,17 @@
     update() {
       if (this.state !== 'playing') return;
 
-      const speed = CFG.gameplay.hookSpeed || 15;
-      const swingSpeed = CFG.gameplay.swingSpeed || 0.04;
+      const speed = CFG.gameplay.hookSpeed || 7;
+      const swingSpeed = CFG.gameplay.swingSpeed || 0.035;
       
       this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - 60; // Персонаж внизу
+      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80);
 
-      // Движение мишеней
+      // Движение мишеней в пределах их безопасных зон (нет нахлестов!)
       this.targets.forEach(t => {
         t.x += t.speed;
-        if (t.x > canvas.width - t.w/2 || t.x < t.w/2) t.speed *= -1;
+        if (t.x > t.maxX) { t.x = t.maxX; t.speed *= -1; }
+        if (t.x < t.minX) { t.x = t.minX; t.speed *= -1; }
       });
 
       if (this.hookState === 'swinging') {
@@ -247,25 +297,24 @@
       } 
       else if (this.hookState === 'shooting') {
         this.hook.length += speed;
-        
         const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
         const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
 
-        // Коллизии
         for (let i = 0; i < this.targets.length; i++) {
           let t = this.targets[i];
           if (Math.abs(hx - t.x) < t.w/2 && Math.abs(hy - t.y) < t.h/2) {
-            this.hookState = 'retracting';
-            this.hook.caughtTarget = t;
-            this.targets.splice(i, 1);
-            break;
+            this.hookState = 'retracting'; this.hook.caughtTarget = t;
+            this.targets.splice(i, 1); break;
           }
         }
-        if (this.hook.length > this.hook.maxLength) this.hookState = 'retracting';
+        if (this.hook.length > this.hook.maxLength) {
+           this.hookState = 'retracting';
+           this.combo = 1.0; // Сброс комбо если выстрел в молоко
+           document.getElementById('combo-display').textContent = this.combo.toFixed(1);
+        }
       } 
       else if (this.hookState === 'retracting') {
         this.hook.length -= speed;
-        
         if (this.hook.caughtTarget) {
           this.hook.caughtTarget.x = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
           this.hook.caughtTarget.y = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
@@ -273,21 +322,31 @@
           this.hook.caughtTarget = null;
         }
 
-        if (this.hook.length <= 60) {
-          this.hookState = 'swinging';
-          this.hook.length = 60;
+        if (this.hook.length <= 80) {
+          this.hookState = 'swinging'; this.hook.length = 80;
           
-          let caught = this.targets.find(t => t.y > canvas.height - 150);
-          if (caught) {
+          let caughtIndex = this.targets.findIndex(t => t.y > canvas.height - 200);
+          if (caughtIndex !== -1) {
+            let caught = this.targets[caughtIndex];
+            
             if (caught.isCorrect) {
-              this.score += 100;
-              document.getElementById('score-display').textContent = this.score;
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.9 } });
+              let pts = Math.floor(100 * this.combo);
+              this.score += pts;
+              this.spawnFloaty(`+${pts} (x${this.combo.toFixed(1)})`, this.hook.x, this.hook.y - 120, '#00ffcc');
+              this.combo = Math.min(this.combo + 0.5, 5.0);
+              
+              confetti({ particleCount: 100, spread: 70, origin: { y: 0.9 }, colors: [CFG.visual.ropeColor, '#ffffff'] });
               this.currentTaskIndex++;
               setTimeout(() => this.loadTask(), 800);
             } else {
+              this.combo = 1.0;
+              document.getElementById('combo-display').textContent = this.combo.toFixed(1);
+              this.spawnFloaty("Промах!", this.hook.x, this.hook.y - 120, '#e74c3c');
               document.getElementById('question-text').textContent = "Ой! Не та мишень!";
-              setTimeout(() => this.loadTask(), 1000); // Рестарт вопроса
+              
+              // Возвращаем мишень обратно наверх
+              caught.y = canvas.height * 0.25; 
+              setTimeout(() => this.loadTask(), 1200);
             }
           }
         }
@@ -297,46 +356,50 @@
     draw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Рисуем мишени
       this.targets.forEach(t => {
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        ctx.beginPath();
-        ctx.roundRect(t.x - t.w/2, t.y - t.h/2, t.w, t.h, 10);
-        ctx.fill();
-        ctx.strokeStyle = '#3498db'; ctx.lineWidth = 3; ctx.stroke();
+        let hasImage = false;
+        if(CFG.visual.target) {
+            hasImage = renderEntity(CFG.visual.target, t.x, t.y, t.w, true, t.w, t.h);
+        }
         
-        ctx.fillStyle = '#2c3e50';
-        ctx.font = 'bold 20px Montserrat';
+        // Если картинки нет или она не загрузилась, рисуем плашку
+        if(!hasImage) {
+            ctx.fillStyle = 'rgba(30,30,30,0.8)';
+            ctx.beginPath(); ctx.roundRect(t.x - t.w/2, t.y - t.h/2, t.w, t.h, 10); ctx.fill();
+            ctx.strokeStyle = CFG.visual.ropeColor; ctx.lineWidth = 2; ctx.stroke();
+        }
+        
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 20px Montserrat';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(t.text, t.x, t.y);
       });
 
-      // Расчет координат крюка
       this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - 80;
+      this.hook.y = canvas.height - (CFG.visual.heroYOffset || 80);
       const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
       const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
 
-      // Веревка
+      // НЕОНОВАЯ ВЕРЕВКА
       ctx.beginPath();
       ctx.moveTo(this.hook.x, this.hook.y);
       ctx.lineTo(hx, hy);
-      ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 4; ctx.stroke();
+      ctx.strokeStyle = CFG.visual.ropeColor || "#00ffcc"; 
+      ctx.lineWidth = 5; 
+      ctx.shadowColor = CFG.visual.ropeColor || "#00ffcc";
+      ctx.shadowBlur = 15; // Свечение
+      ctx.stroke();
+      ctx.shadowBlur = 0; // Сбрасываем тень для остальных элементов
 
-      // Крюк (Эмодзи или кружок)
-      ctx.font = '40px Arial';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(CFG.assets.hook || "⚓", hx, hy);
+      // Крюк
+      renderEntity(CFG.visual.hook || "⚓", hx, hy, 50);
 
       // Персонаж
-      ctx.font = '80px Arial';
-      ctx.fillText(CFG.assets.hero || "🧙‍♂️", this.hook.x, this.hook.y + 40);
+      renderEntity(CFG.visual.hero || "🧙‍♂️", this.hook.x, this.hook.y, CFG.visual.heroSize || 120);
     },
 
     loop() {
       if (this.state !== 'playing') return;
-      this.update();
-      this.draw();
+      this.update(); this.draw();
       requestAnimationFrame(() => this.loop());
     },
 
@@ -346,11 +409,10 @@
       document.getElementById('end-screen').style.display = 'flex';
       document.getElementById('end-title').textContent = CFG.ui.win || "КВИЗ ПРОЙДЕН!";
       document.getElementById('end-score').textContent = "Счёт: " + this.score;
-      confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 } });
+      confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: [CFG.visual.ropeColor, '#ffffff'] });
     }
   };
 
-  // Управление
   window.addEventListener('keydown', (e) => { if (e.code === 'Space') Game.shoot(); });
   canvas.addEventListener('mousedown', () => Game.shoot());
   canvas.addEventListener('touchstart', (e) => { e.preventDefault(); Game.shoot(); }, {passive: false});
@@ -358,7 +420,6 @@
   document.getElementById('btnStart').onclick = () => Game.start();
   document.getElementById('btnAgain').onclick = () => Game.start();
 
-  // Запуск
   (async function init() {
     await loadConfig();
     applyUI();

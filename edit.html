@@ -162,9 +162,9 @@
             <h2>🎨 Изображения (Ссылки)</h2>
             <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif). Каждая мишень с новой строки (будут браться рандомно).</p>
             <div class="qStack">
-              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="https://nikashum93.github.io/hk/hero.png"></div>
-              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="https://nikashum93.github.io/hk/hook.png"></div>
-              <div><label>Мишени (Targets)</label><textarea id="img_target" placeholder="🍔&#10;🍕">🍔</textarea></div>
+              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="hero.png"></div>
+              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="hook.png"></div>
+              <div><label>Мишени (Targets)</label><textarea id="img_target" placeholder="target.png&#10;target2.png">target.png</textarea></div>
             </div>
           </div>
 
@@ -301,8 +301,8 @@
         again: document.getElementById('ui_again').value || "ЕЩЁ РАЗ"
       },
       visual: {
-        hero: document.getElementById('img_hero').value || "🧙‍♂️",
-        hook: document.getElementById('img_hook').value || "⚓",
+        hero: document.getElementById('img_hero').value || "hero.png",
+        hook: document.getElementById('img_hook').value || "hook.png",
         targets: parseLines(document.getElementById('img_target').value).filter(x=>x),
         targetSize: parseInt(document.getElementById('target_size').value) || 90,
         ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
@@ -310,7 +310,6 @@
         heroSize: parseInt(document.getElementById('hero_size').value) || 150,
         hookSize: parseInt(document.getElementById('hook_size').value) || 60,
         hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0,
-        // Texts
         fontFamily: document.getElementById('font_family').value || 'Montserrat',
         qColor: document.getElementById('q_color').value || '#111111',
         qGlow: document.getElementById('q_glow').value || '#000000',

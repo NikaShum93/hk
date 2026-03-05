@@ -1,759 +1,88 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Hook Quiz</title>
-
-  <!-- GSAP (анимации) -->
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-
-  <!-- Confetti (блёстки/фейерверк) -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-
+  <meta charset="UTF-8">
+  <title>Игра - Quiz Miner</title>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <style>
-    :root{
-      --ui-bg: rgba(0,0,0,.35);
-      --ui-stroke: rgba(255,255,255,.18);
-      --ui-text: #fff;
-      --accent: #7CFFB2;
-      --bad: #FF5C7A;
-      --target-bg: rgba(255,255,255,.12);
-      --target-stroke: rgba(255,255,255,.25);
+    body {
+      margin: 0; padding: 0;
+      display: flex; justify-content: center; align-items: center;
+      height: 100vh;
+      background-color: #2c3e50;
+      font-family: 'Segoe UI', sans-serif;
     }
-
-    html,body{height:100%;margin:0;background:#0b0f1a;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    #stage{
-      position:relative; width:100%; height:100%;
-      overflow:hidden;
-      user-select:none;
-      touch-action: manipulation;
-      /* Можно подложить фон картинкой */
-      background: radial-gradient(1200px 600px at 50% 0%, rgba(124,255,178,.14), transparent 60%),
-                  radial-gradient(900px 500px at 15% 15%, rgba(130,170,255,.12), transparent 55%),
-                  linear-gradient(180deg, #05070e, #0b0f1a);
+    .game-container {
+      position: relative;
+      width: 600px; height: 500px;
+      background-color: #ecf0f1;
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-
-    /* UI */
-    #ui{
-      position:absolute; left:14px; right:14px; top:12px;
-      display:flex; gap:10px; align-items:center; justify-content:space-between;
-      color:var(--ui-text);
-      pointer-events:none;
+    .ui-layer {
+      position: absolute; top: 0; left: 0; width: 100%;
+      padding: 20px; box-sizing: border-box; pointer-events: none;
+      text-align: center; z-index: 10;
     }
-    .panel{
-      pointer-events:none;
-      background:var(--ui-bg);
-      border:1px solid var(--ui-stroke);
-      border-radius:14px;
-      padding:10px 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      backdrop-filter: blur(8px);
+    .top-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 15px;
     }
-    #question{
-      position:absolute;
-      top:70px; left:14px; right:14px;
-      color:var(--ui-text);
-      font-weight:800;
-      font-size: clamp(16px, 2.4vw, 28px);
-      line-height:1.15;
-      text-shadow: 0 8px 24px rgba(0,0,0,.45);
-      padding:12px 14px;
-      border-radius:16px;
-      background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06));
-      border:1px solid rgba(255,255,255,.16);
-      max-width: 1100px;
+    .progress-bar-container {
+      width: 60%; height: 10px; background-color: #bdc3c7; border-radius: 5px; overflow: hidden;
     }
-
-    #hudRight{display:flex;gap:10px;align-items:center}
-    #scoreBox{min-width:140px;text-align:center}
-    #progressBox{min-width:240px}
-    .label{font-size:12px;opacity:.85;margin-bottom:6px}
-    .big{font-size:18px;font-weight:800}
-    .bar{
-      height:10px; border-radius:999px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.18);
-      background: rgba(0,0,0,.25);
+    .progress-bar {
+      width: 0%; height: 100%; background-color: #2ecc71; transition: width 0.3s ease;
     }
-    .bar > i{
-      display:block; height:100%; width:0%;
-      background: linear-gradient(90deg, rgba(124,255,178,.85), rgba(130,170,255,.85));
-      border-radius:999px;
-      box-shadow: 0 0 18px rgba(124,255,178,.35);
-    }
-
-    /* Targets */
-    #targets{
-      position:absolute; left:0; right:0;
-      top:150px; bottom:160px;
-      pointer-events:none;
-    }
-    .target{
-      position:absolute;
-      width: min(240px, 40vw);
-      max-width: 280px;
-      padding: 12px 14px;
-      border-radius: 16px;
-      background: var(--target-bg);
-      border:1px solid var(--target-stroke);
-      box-shadow: 0 14px 30px rgba(0,0,0,.35);
-      color:#fff;
-      font-weight:800;
-      letter-spacing:.2px;
-      transform: translateZ(0);
-      will-change: transform;
-    }
-    .target small{
-      display:block;
-      opacity:.75;
-      font-weight:700;
-      margin-bottom:4px;
-      font-size:12px;
-    }
-
-    /* Rope layer (SVG) */
-    #ropeLayer{
-      position:absolute; inset:0;
-      pointer-events:none;
-    }
-    #ropePath{
-      fill:none;
-      stroke: rgba(235,235,255,.85);
-      stroke-width: 4;
-      stroke-linecap: round;
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,.4));
-    }
-    /* Дополнительная “нить” для объёма */
-    #ropePath2{
-      fill:none;
-      stroke: rgba(124,255,178,.55);
-      stroke-width: 2;
-      stroke-linecap: round;
-      filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
-    }
-
-    /* Character + hook */
-    #characterWrap{
-      position:absolute;
-      left: 50%;
-      bottom: 8px;
-      transform: translateX(-50%);
-      width: min(520px, 86vw);
-      height: 160px;
-      pointer-events:auto;
-      display:flex;
-      align-items:flex-end;
-      justify-content:center;
-    }
-    #character{
-      width: 240px;
-      height: 150px;
-      border-radius: 26px;
-      border:1px solid rgba(255,255,255,.16);
-      background:
-        radial-gradient(120px 80px at 35% 40%, rgba(124,255,178,.25), transparent 60%),
-        radial-gradient(130px 90px at 70% 35%, rgba(130,170,255,.22), transparent 60%),
-        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));
-      box-shadow: 0 20px 40px rgba(0,0,0,.45);
-      position:relative;
-      overflow:hidden;
-      cursor:pointer;
-    }
-    #character:after{
-      content:"";
-      position:absolute; inset:-40px;
-      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.18), transparent 40%);
-      transform: rotate(12deg);
-    }
-
-    /* Pivot point for hook swing */
-    #pivot{
-      position:absolute;
-      width: 10px; height: 10px;
-      left: 50%; bottom: 130px;
-      transform: translate(-50%, 50%);
-      opacity:0; /* можно включить для отладки */
-      background: red;
-      border-radius: 50%;
-      pointer-events:none;
-    }
-
-    #hook{
-      position:absolute;
-      width: 34px; height: 34px;
-      border-radius: 10px;
-      background:
-        radial-gradient(circle at 35% 30%, rgba(255,255,255,.35), transparent 45%),
-        linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.08));
-      border:1px solid rgba(255,255,255,.22);
-      box-shadow: 0 14px 30px rgba(0,0,0,.45);
-      pointer-events:none;
-    }
-    #hook:before{
-      content:"";
-      position:absolute;
-      left:9px; top:9px;
-      width:12px; height:12px;
-      border-radius: 999px;
-      border:2px solid rgba(124,255,178,.85);
-      box-shadow: 0 0 18px rgba(124,255,178,.35);
-    }
-
-    /* small tip */
-    #hint{
-      position:absolute;
-      left:14px; bottom:14px;
-      color:rgba(255,255,255,.85);
-      font-size:12px;
-      background: rgba(0,0,0,.28);
-      border:1px solid rgba(255,255,255,.14);
-      border-radius: 999px;
-      padding: 8px 10px;
-      backdrop-filter: blur(8px);
-    }
-
-    /* hit feedback */
-    .hitGood{ outline: 2px solid rgba(124,255,178,.7); box-shadow: 0 0 0 6px rgba(124,255,178,.15), 0 20px 40px rgba(0,0,0,.45); }
-    .hitBad{ outline: 2px solid rgba(255,92,122,.7); box-shadow: 0 0 0 6px rgba(255,92,122,.12), 0 20px 40px rgba(0,0,0,.45); }
-
-    /* reduce motion accessibility */
-    @media (prefers-reduced-motion: reduce){
-      *{transition:none!important; animation:none!important}
-    }
+    .score { font-weight: bold; font-size: 18px; color: #34495e; }
+    #question-text { margin: 0; color: #2c3e50; font-size: 22px; }
+    canvas { display: block; cursor: crosshair; }
   </style>
 </head>
-
 <body>
-  <div id="stage">
-    <div id="ui">
-      <div class="panel" id="leftPanel">
-        <div class="label">Управление</div>
-        <div class="big">SPACE / клик по персонажу</div>
-      </div>
 
-      <div id="hudRight">
-        <div class="panel" id="progressBox">
-          <div class="label">Прогресс</div>
-          <div class="bar"><i id="barFill"></i></div>
+  <div class="game-container">
+    <div class="ui-layer">
+      <div class="top-bar">
+        <div class="progress-bar-container">
+          <div id="progress-bar" class="progress-bar"></div>
         </div>
-        <div class="panel" id="scoreBox">
-          <div class="label">Очки</div>
-          <div class="big" id="score">0</div>
-        </div>
+        <div class="score">Очки: <span id="score-display">0</span></div>
       </div>
+      <h2 id="question-text">Загрузка вопросов...</h2>
     </div>
-
-    <div id="question">Загрузка…</div>
-
-    <div id="targets"></div>
-
-    <svg id="ropeLayer" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <path id="ropePath" d=""></path>
-      <path id="ropePath2" d=""></path>
-    </svg>
-
-    <div id="characterWrap">
-      <div id="pivot"></div>
-      <div id="hook"></div>
-      <div id="character" title="Кликни или нажми SPACE"></div>
-    </div>
-
-    <div id="hint">Подсказка: поймай правильный ответ крюком 🪝</div>
+    
+    <canvas id="gameCanvas" width="600" height="500"></canvas>
   </div>
 
-<script>
-(() => {
-  // ---------------------------
-  // 1) Config (из editor / postMessage / demo)
-  // ---------------------------
-  const DEMO_CONFIG = {
-    swing: { minDeg: -38, maxDeg: 38, speed: 1.25 }, // speed: секунд на пол-качания
-    shoot: { maxLen: 420, outDur: 0.22, backDur: 0.26 },
-    targets: { min: 2, max: 6, speed: 3.4 }, // speed: базовая скорость движения мишеней
-    scoring: { correct: 10, wrong: -2 },
-    questions: [
-      { q: "Выбери правильную форму: He ___ to school.", answers: [
-        { t: "go", ok:false }, { t: "goes", ok:true }, { t: "going", ok:false }
-      ]},
-      { q: "Выбери предлог: The cat is ___ the table.", answers: [
-        { t: "on", ok:true }, { t: "in", ok:false }, { t: "at", ok:false }, { t: "to", ok:false }
-      ]},
-      { q: "Собери вопрос: ___ you like pizza?", answers: [
-        { t: "Do", ok:true }, { t: "Does", ok:false }
-      ]}
-    ]
-  };
+  <script src="engine.js"></script>
 
-  let CONFIG = structuredClone(DEMO_CONFIG);
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ui = {
+        questionText: document.getElementById('question-text'),
+        scoreDisplay: document.getElementById('score-display'),
+        progressBar: document.getElementById('progress-bar')
+      };
 
-  // Попытка: взять config из query (?config=base64json) — удобно для отладки
-  try{
-    const p = new URLSearchParams(location.search);
-    const raw = p.get("config");
-    if(raw){
-      const json = decodeURIComponent(escape(atob(raw)));
-      CONFIG = { ...CONFIG, ...JSON.parse(json) };
-    }
-  }catch(e){}
+      // Создаем экземпляр игры из engine.js
+      const gameEngine = new QuizMinerEngine('gameCanvas', ui);
 
-  // Попытка: принять config от editor через postMessage
-  window.addEventListener("message", (ev) => {
-    const data = ev.data;
-    if(!data) return;
+      // Имитируем получение данных с сервера (Mock Data)
+      // В реальном расширении здесь будет fetch('https://твой-сервер/api/quiz')
+      const mockServerData = [
+        { question: "Самая большая планета?", answers: ["Марс", "Юпитер", "Земля", "Венера"], correct: 1 },
+        { question: "Сколько бит в байте?", answers: ["4", "16", "8", "32"], correct: 2 },
+        { question: "Язык стилей веба?", answers: ["HTML", "JS", "CSS", "PHP"], correct: 2 }
+      ];
 
-    // Универсально: ждём объект вида { type:"HOOKQUIZ_CONFIG", payload:{...} }
-    if(data.type === "HOOKQUIZ_CONFIG" && data.payload){
-      CONFIG = mergeDeep(structuredClone(DEMO_CONFIG), data.payload);
-      bootOrReload();
-    }
-  });
-
-  function mergeDeep(base, patch){
-    for(const k in patch){
-      if(patch[k] && typeof patch[k] === "object" && !Array.isArray(patch[k])){
-        base[k] = mergeDeep(base[k] || {}, patch[k]);
-      } else {
-        base[k] = patch[k];
-      }
-    }
-    return base;
-  }
-
-  // ---------------------------
-  // 2) Stage refs
-  // ---------------------------
-  const stage = document.getElementById("stage");
-  const targetsWrap = document.getElementById("targets");
-  const questionEl = document.getElementById("question");
-  const scoreEl = document.getElementById("score");
-  const barFill = document.getElementById("barFill");
-
-  const character = document.getElementById("character");
-  const hook = document.getElementById("hook");
-  const pivot = document.getElementById("pivot");
-
-  const ropeSVG = document.getElementById("ropeLayer");
-  const ropePath = document.getElementById("ropePath");
-  const ropePath2 = document.getElementById("ropePath2");
-
-  // ---------------------------
-  // 3) Game state
-  // ---------------------------
-  let qIndex = 0;
-  let score = 0;
-
-  let swingTween = null;
-  let targetsTweens = [];
-  let rafId = null;
-
-  // hook state
-  const hookState = {
-    angleRad: 0,
-    baseLen: 150,     // длина “свободного” крюка при качании
-    len: 150,
-    shooting: false
-  };
-
-  function setScore(v){
-    score = v;
-    scoreEl.textContent = String(score);
-  }
-
-  function setProgress(){
-    const total = CONFIG.questions?.length || 1;
-    const pct = Math.round(((qIndex) / total) * 100);
-    barFill.style.width = pct + "%";
-  }
-
-  // ---------------------------
-  // 4) Layout helpers
-  // ---------------------------
-  function getRect(el){ return el.getBoundingClientRect(); }
-
-  function stageToSvg(x, y){
-    const r = ropeSVG.getBoundingClientRect();
-    const sx = (x - r.left) / r.width * 100;
-    const sy = (y - r.top) / r.height * 100;
-    return { sx, sy };
-  }
-
-  function updateHookPosition(){
-    const pivotR = getRect(pivot);
-    const px = pivotR.left + pivotR.width/2;
-    const py = pivotR.top + pivotR.height/2;
-
-    // угол от GSAP будет храниться в pivot.dataset.deg
-    const deg = parseFloat(pivot.dataset.deg || "0");
-    hookState.angleRad = deg * Math.PI / 180;
-
-    const len = hookState.len;
-    const hx = px + Math.cos(hookState.angleRad - Math.PI/2) * len;
-    const hy = py + Math.sin(hookState.angleRad - Math.PI/2) * len;
-
-    // ставим хук
-    const stageR = getRect(stage);
-    hook.style.left = (hx - stageR.left - hook.offsetWidth/2) + "px";
-    hook.style.top  = (hy - stageR.top  - hook.offsetHeight/2) + "px";
-
-    // рисуем верёвку (bezier)
-    const a = stageToSvg(px, py);
-    const b = stageToSvg(hx, hy);
-
-    // контрольная точка “провиса” верёвки: зависит от длины и угла
-    const midx = (a.sx + b.sx)/2;
-    const midy = (a.sy + b.sy)/2;
-    const sag  = Math.min(18, 6 + (hookState.len / 40)); // провис
-    const cx = midx;
-    const cy = midy + sag;
-
-    ropePath.setAttribute("d", `M ${a.sx} ${a.sy} Q ${cx} ${cy} ${b.sx} ${b.sy}`);
-    ropePath2.setAttribute("d", `M ${a.sx} ${a.sy} Q ${cx} ${cy+1.2} ${b.sx} ${b.sy}`);
-
-    // лёгкое “дрожание каната” (смотрится живее)
-    // (не трогаем при prefers-reduced-motion)
-  }
-
-  function startRopeRaf(){
-    cancelAnimationFrame(rafId);
-    const tick = () => {
-      updateHookPosition();
-      rafId = requestAnimationFrame(tick);
-    };
-    rafId = requestAnimationFrame(tick);
-  }
-
-  // ---------------------------
-  // 5) Targets
-  // ---------------------------
-  function clearTargets(){
-    targetsTweens.forEach(t => t?.kill?.());
-    targetsTweens = [];
-    targetsWrap.innerHTML = "";
-  }
-
-  function makeTargetsForQuestion(question){
-    clearTargets();
-
-    const answers = question.answers || [];
-    const minN = clamp(CONFIG.targets?.min ?? 2, 2, 6);
-    const maxN = clamp(CONFIG.targets?.max ?? 6, 2, 6);
-
-    // кол-во мишеней: от 2 до 6, но не меньше кол-ва ответов
-    const wantN = clamp(answers.length, minN, maxN);
-
-    // если ответов больше 6 — берём первые 6 (можно потом сделать рандом/пагинацию)
-    const used = answers.slice(0, wantN);
-
-    // 2 ряда
-    const rows = 2;
-    const rowYs = [0.23, 0.43]; // относительные y внутри targetsWrap
-    const wrapR = getRect(targetsWrap);
-
-    used.forEach((ans, i) => {
-      const el = document.createElement("div");
-      el.className = "target";
-      el.dataset.ok = ans.ok ? "1" : "0";
-      el.dataset.text = ans.t;
-
-      el.innerHTML = `<small>Вариант</small>${escapeHtml(ans.t)}`;
-
-      targetsWrap.appendChild(el);
-
-      // позиция по ряду
-      const row = i % rows;
-      const y = wrapR.height * rowYs[row];
-
-      // старт слева/справа вперемешку
-      const startLeft = (i % 2 === 0);
-      const fromX = startLeft ? -el.offsetWidth - 20 : wrapR.width + 20;
-      const toX   = startLeft ? wrapR.width + 20 : -el.offsetWidth - 20;
-
-      gsap.set(el, { x: fromX, y, rotate: gsap.utils.random(-2.5, 2.5) });
-
-      // скорость: базовая + немного рандома
-      const base = CONFIG.targets?.speed ?? 3.4;
-      const dur = Math.max(1.8, base + gsap.utils.random(-0.8, 0.9));
-
-      const tw = gsap.to(el, {
-        x: toX,
-        duration: dur,
-        ease: "sine.inOut",
-        yoyo: true,
-        repeat: -1
-      });
-
-      targetsTweens.push(tw);
+      // Загружаем фейковые данные в движок с задержкой, чтобы сымитировать пинг сервера
+      setTimeout(() => {
+        gameEngine.loadLevels(mockServerData);
+        gameEngine.start();
+      }, 500);
     });
-  }
+  </script>
 
-  // ---------------------------
-  // 6) Swing + Shoot
-  // ---------------------------
-  function startSwing(){
-    swingTween?.kill?.();
-
-    // pivot angle will be animated; store in dataset
-    pivot.dataset.deg = "0";
-
-    const minDeg = CONFIG.swing?.minDeg ?? -38;
-    const maxDeg = CONFIG.swing?.maxDeg ?? 38;
-    const halfDur = Math.max(0.6, CONFIG.swing?.speed ?? 1.25);
-
-    // качаем “угол”
-    swingTween = gsap.to(pivot.dataset, {
-      deg: maxDeg,
-      duration: halfDur,
-      ease: "sine.inOut",
-      yoyo: true,
-      repeat: -1,
-      onUpdate: () => {
-        // pivot.dataset.deg обновляется сам
-      }
-    });
-
-    // стартовая длина
-    hookState.baseLen = 150;
-    hookState.len = hookState.baseLen;
-  }
-
-  function stopAllMotion(){
-    swingTween?.pause?.();
-    targetsTweens.forEach(t => t?.pause?.());
-  }
-
-  function resumeAllMotion(){
-    swingTween?.resume?.();
-    targetsTweens.forEach(t => t?.resume?.());
-  }
-
-  function shoot(){
-    if(hookState.shooting) return;
-    hookState.shooting = true;
-
-    // коротко “подтянуть” верёвку перед вылетом (эффект натяжения)
-    const pre = gsap.timeline();
-
-    const maxLen = clamp(CONFIG.shoot?.maxLen ?? 420, 220, 900);
-    const outDur = clamp(CONFIG.shoot?.outDur ?? 0.22, 0.12, 0.5);
-    const backDur = clamp(CONFIG.shoot?.backDur ?? 0.26, 0.14, 0.65);
-
-    pre.to(hookState, { len: hookState.baseLen - 10, duration: 0.06, ease: "power2.out" })
-       .to(hookState, { len: maxLen, duration: outDur, ease: "power3.out",
-          onUpdate: checkHit
-       })
-       .to(hookState, { len: hookState.baseLen, duration: backDur, ease: "power2.in",
-          onComplete: () => {
-            hookState.shooting = false;
-          }
-       });
-  }
-
-  // ---------------------------
-  // 7) Hit detection + resolution
-  // ---------------------------
-  let resolved = false;
-
-  function checkHit(){
-    if(resolved) return;
-
-    const hookR = getRect(hook);
-    const hookCx = hookR.left + hookR.width/2;
-    const hookCy = hookR.top + hookR.height/2;
-
-    const tEls = [...targetsWrap.querySelectorAll(".target")];
-    for(const el of tEls){
-      const r = getRect(el);
-
-      // “попадание” — по кругу радиуса
-      const cx = r.left + r.width/2;
-      const cy = r.top + r.height/2;
-
-      const dx = (hookCx - cx);
-      const dy = (hookCy - cy);
-      const dist = Math.hypot(dx, dy);
-
-      const hitRadius = Math.min(r.width, r.height) * 0.42;
-
-      if(dist < hitRadius){
-        resolveHit(el);
-        break;
-      }
-    }
-  }
-
-  function resolveHit(targetEl){
-    resolved = true;
-    stopAllMotion();
-
-    const ok = targetEl.dataset.ok === "1";
-    targetEl.classList.add(ok ? "hitGood" : "hitBad");
-
-    // “схватить” цель: притянуть к крюку и потом к персонажу
-    const tl = gsap.timeline({
-      defaults:{ ease:"power2.out" }
-    });
-
-    // 1) приклеиваем цель к крюку (визуально)
-    const hookR = getRect(hook);
-    const stageR = getRect(stage);
-    const tx = (hookR.left - stageR.left) + hookR.width/2 - (targetEl.offsetWidth/2);
-    const ty = (hookR.top  - stageR.top ) + hookR.height/2 - (targetEl.offsetHeight/2);
-
-    tl.to(targetEl, { x: "+=0", duration: 0.001 }) // noop, чтобы gsap “увидел” элемент
-      .to(targetEl, { duration: 0.08, scale: 1.03 })
-      .to(targetEl, { duration: 0.10, x: tx, y: ty }, "<");
-
-    // 2) небольшая “вибрация” каната
-    tl.to(hook, { duration: 0.10, rotate: ok ? -6 : 6 }, "<")
-      .to(hook, { duration: 0.14, rotate: 0 }, ">");
-
-    // 3) вернуть цель к персонажу (и убрать)
-    const charR = getRect(character);
-    const toX = (charR.left - stageR.left) + charR.width/2 - targetEl.offsetWidth/2;
-    const toY = (charR.top  - stageR.top ) + charR.height/2 - targetEl.offsetHeight/2;
-
-    tl.to(targetEl, { duration: 0.30, x: toX, y: toY, scale: 0.92, ease:"power3.inOut" }, ">-0.03")
-      .to(targetEl, { duration: 0.12, opacity: 0 }, ">-0.06");
-
-    // 4) конфетти + скоринг
-    tl.add(() => {
-      fireSparkles(ok);
-      applyScore(ok);
-      nextQuestionSoon();
-    }, ">");
-  }
-
-  function fireSparkles(ok){
-    const origin = { x: 0.5, y: 0.72 };
-    const count = ok ? 110 : 55;
-
-    confetti({
-      particleCount: count,
-      spread: ok ? 85 : 55,
-      startVelocity: ok ? 55 : 38,
-      scalar: ok ? 1.05 : 0.95,
-      origin
-    });
-
-    // второй залп (красиво)
-    setTimeout(() => {
-      confetti({
-        particleCount: Math.round(count*0.55),
-        spread: ok ? 105 : 65,
-        startVelocity: ok ? 45 : 32,
-        scalar: 0.95,
-        origin
-      });
-    }, 120);
-  }
-
-  function applyScore(ok){
-    const add = ok ? (CONFIG.scoring?.correct ?? 10) : (CONFIG.scoring?.wrong ?? -2);
-    setScore(score + add);
-
-    // небольшой “памп” очков
-    gsap.fromTo(scoreEl, { scale: 1 }, { scale: 1.18, duration: 0.12, yoyo:true, repeat:1, ease:"power2.out" });
-  }
-
-  function nextQuestionSoon(){
-    const total = CONFIG.questions?.length || 1;
-
-    // прогресс (после ответа)
-    const pct = Math.round(((qIndex + 1) / total) * 100);
-    gsap.to(barFill, { width: pct + "%", duration: 0.28, ease: "power2.out" });
-
-    setTimeout(() => {
-      qIndex++;
-      if(qIndex >= total){
-        finishGame();
-      }else{
-        loadQuestion(qIndex);
-      }
-    }, 420);
-  }
-
-  function finishGame(){
-    questionEl.textContent = "Финал! Ты прошёл все вопросы ✨";
-    clearTargets();
-
-    // финальный салют
-    confetti({ particleCount: 160, spread: 120, startVelocity: 60, origin:{x:0.5,y:0.35} });
-    setTimeout(() => confetti({ particleCount: 110, spread: 140, startVelocity: 55, origin:{x:0.2,y:0.35} }), 140);
-    setTimeout(() => confetti({ particleCount: 110, spread: 140, startVelocity: 55, origin:{x:0.8,y:0.35} }), 240);
-
-    // можно отправлять событие в Genially (если нужно)
-    // postMessage({type:"HOOKQUIZ_FINISHED", score}, "*");
-    resumeAllMotion();
-  }
-
-  // ---------------------------
-  // 8) Question load
-  // ---------------------------
-  function loadQuestion(i){
-    resolved = false;
-
-    const q = CONFIG.questions[i];
-    questionEl.textContent = q?.q || "Вопрос не найден";
-
-    // лёгкая анимация вопроса
-    gsap.fromTo(questionEl, { y: -6, opacity: 0.35 }, { y: 0, opacity: 1, duration: 0.22, ease: "power2.out" });
-
-    makeTargetsForQuestion(q);
-
-    // сброс крюка
-    hookState.len = hookState.baseLen;
-
-    resumeAllMotion();
-  }
-
-  // ---------------------------
-  // 9) Controls
-  // ---------------------------
-  function onAction(){
-    if(hookState.shooting) return;
-    if(resolved) return;
-    shoot();
-  }
-
-  window.addEventListener("keydown", (e) => {
-    if(e.code === "Space"){
-      e.preventDefault();
-      onAction();
-    }
-  });
-
-  character.addEventListener("click", (e) => {
-    e.preventDefault();
-    onAction();
-  });
-
-  // ---------------------------
-  // 10) Boot / Reload
-  // ---------------------------
-  function bootOrReload(){
-    // reset
-    qIndex = 0;
-    setScore(0);
-    barFill.style.width = "0%";
-    setProgress();
-
-    startSwing();
-    startRopeRaf();
-    loadQuestion(0);
-  }
-
-  // helpers
-  function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, m => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
-  }
-
-  // run
-  bootOrReload();
-
-})();
-</script>
 </body>
 </html>

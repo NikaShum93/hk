@@ -149,6 +149,30 @@
               <div><label>Кнопка Повтор</label><input id="ui_again" type="text" value="ЕЩЁ РАЗ"></div>
             </div>
           </div>
+
+          <div class="card">
+            <h2>🎛️ Дизайн Кнопки "СТАРТ"</h2>
+            <div class="grid2">
+              <div><label>Цвет кнопки</label><input id="ui_btn_color" type="color" value="#e74c3c"></div>
+              <div><label>Цвет свечения (Неон)</label><input id="ui_btn_glow" type="color" value="#c0392b"></div>
+              <div>
+                <label>Размер кнопки</label>
+                <input id="ui_btn_size" type="range" min="3" max="15" step="0.5" value="5">
+              </div>
+              <div>
+                <label>Позиция по вертикали (Y %)</label>
+                <input id="ui_btn_y" type="range" min="10" max="95" value="80">
+              </div>
+              <div style="grid-column: 1 / -1;">
+                <label>Анимация</label>
+                <select id="ui_btn_anim">
+                  <option value="none">Без анимации</option>
+                  <option value="pulse">3D Пульсация</option>
+                  <option value="glitch">Глитч</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="tabPanel" data-panel="visual">
@@ -216,7 +240,7 @@
             <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст вопроса</h3>
             <div class="grid2">
               <div><label>Цвет текста</label><input id="q_color" type="color" value="#111111"></div>
-              <div><label>Неоновое свечение (Тень)</label><input id="q_glow" type="color" value="#000000"></div>
+              <div><label>Цвет неоновой обводки рамок (и текст вопроса)</label><input id="q_glow" type="color" value="#00ffcc"></div>
               <div style="grid-column: 1 / -1">
                 <label>Размер шрифта вопроса</label>
                 <input id="q_size" type="range" min="2" max="10" step="0.5" value="4.5">
@@ -225,7 +249,7 @@
 
             <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст над мишенями</h3>
             <div class="grid2">
-              <div><label>Цвет текста</label><input id="t_color" type="color" value="#000000"></div>
+              <div><label>Цвет текста</label><input id="t_color" type="color" value="#ffffff"></div>
               <div><label>Неоновое свечение (Тень)</label><input id="t_glow" type="color" value="#000000"></div>
               <div style="grid-column: 1 / -1">
                 <label>Размер шрифта мишеней</label>
@@ -309,13 +333,18 @@
         titleImg: document.getElementById('ui_title_img').value || "",
         win: document.getElementById('ui_win').value || "КВИЗ ПРОЙДЕН!",
         start: document.getElementById('ui_start').value || "СТАРТ",
-        again: document.getElementById('ui_again').value || "ЕЩЁ РАЗ"
+        again: document.getElementById('ui_again').value || "ЕЩЁ РАЗ",
+        btnColor: document.getElementById('ui_btn_color').value || "#e74c3c",
+        btnGlow: document.getElementById('ui_btn_glow').value || "#c0392b",
+        btnSize: parseFloat(document.getElementById('ui_btn_size').value) || 5,
+        btnY: parseInt(document.getElementById('ui_btn_y').value) || 80,
+        btnAnim: document.getElementById('ui_btn_anim').value || "none"
       },
       visual: {
         bgTransparent: document.getElementById('bg_transparent').checked,
         hero: document.getElementById('img_hero').value || "hero.png",
         hook: document.getElementById('img_hook').value || "hook.png",
-        hookSound: document.getElementById('sound_hook').value || "",
+        hookSound: document.getElementById('sound_hook').value || "https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3",
         targets: parseLines(document.getElementById('img_target').value).filter(x=>x),
         targetSize: parseInt(document.getElementById('target_size').value) || 90,
         ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
@@ -325,10 +354,10 @@
         hookSize: parseInt(document.getElementById('hook_size').value) || 60,
         hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0,
         fontFamily: document.getElementById('font_family').value || 'Montserrat',
-        qColor: document.getElementById('q_color').value || '#111111',
-        qGlow: document.getElementById('q_glow').value || '#000000',
+        qColor: document.getElementById('q_color').value || '#ffffff',
+        qGlow: document.getElementById('q_glow').value || '#00ffcc',
         qSize: parseFloat(document.getElementById('q_size').value) || 4.5,
-        tColor: document.getElementById('t_color').value || '#000000',
+        tColor: document.getElementById('t_color').value || '#ffffff',
         tGlow: document.getElementById('t_glow').value || '#000000',
         tSize: parseInt(document.getElementById('t_size').value) || 22
       },

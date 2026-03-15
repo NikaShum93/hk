@@ -12,6 +12,7 @@
     :root {
       --btn-color: #e74c3c;
       --btn-glow: #c0392b;
+      --theme-glow: #00ffcc; /* Основной цвет неоновой обводки */
     }
     
     * { box-sizing: border-box; }
@@ -22,115 +23,116 @@
     #game-app {
       width: 100%; height: 100%;
       display: flex; flex-direction: column;
-      background: radial-gradient(circle at bottom, #2c3e50, #0a0a0a);
+      background: radial-gradient(circle at bottom, #1a252f, #0a0a0a);
       font-family: 'Montserrat', sans-serif;
       user-select: none;
       position: relative;
     }
-
     #game-app.transparent-bg { background: transparent !important; }
 
-    /* Эпичный игровой интерфейс (HUD) */
+    /* === СОВРЕМЕННЫЙ ИГРОВОЙ HUD === */
     .ui-layer {
-      position: absolute; top: 0; left: 0; width: 100%;
-      padding: 20px 30px; box-sizing: border-box;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      padding: 20px; box-sizing: border-box;
       pointer-events: none; z-index: 10;
-      color: white; text-align: center;
       display: flex; flex-direction: column; align-items: center;
     }
 
-    .top-bar {
+    .hud-header {
       display: flex; justify-content: space-between; align-items: flex-start;
       width: 100%; max-width: 1200px;
-      margin-bottom: 20px;
     }
 
-    /* Стилизованный Прогресс-бар */
-    .progress-wrapper {
-      width: 40%; background: rgba(0, 0, 0, 0.6);
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px; padding: 4px;
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.5);
+    .hud-center {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 15px;
+      margin-top: 5px;
     }
+
+    .hud-right {
+      position: absolute; right: 20px; top: 20px;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+    }
+
+    /* === БЕГАЮЩИЙ НЕОН (ОБЕРТКА) === */
+    .glowing-wrap {
+      position: relative;
+      padding: 3px; /* Толщина неоновой рамки */
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+    .glowing-wrap::before {
+      content: ""; position: absolute; top: -100%; left: -100%; width: 300%; height: 300%;
+      background: conic-gradient(transparent, transparent, var(--theme-glow), transparent 30%);
+      animation: spinGlow 3s linear infinite;
+      z-index: 0;
+    }
+    .glowing-inner {
+      position: relative;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 21px; /* Чуть меньше обертки */
+      z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    @keyframes spinGlow { 100% { transform: rotate(360deg); } }
+
+    /* === ВОПРОС === */
+    .q-inner {
+      padding: 15px 40px;
+      font-size: 4.5vmin; font-weight: 900; text-align: center; color: #fff;
+      text-transform: uppercase; letter-spacing: 1px;
+      min-width: 250px; max-width: 90vw;
+    }
+
+    /* === ПРОГРЕСС-БАР === */
+    .p-wrap { width: 100%; max-width: 400px; border-radius: 12px; }
+    .p-inner { padding: 4px; border-radius: 9px; width: 100%; display: flex; justify-content: flex-start; }
     .progress-fill { 
-      width: 0%; height: 16px; 
-      background: linear-gradient(90deg, #00ffcc, #00b38f);
-      border-radius: 8px;
+      width: 0%; height: 10px; 
+      background: var(--theme-glow);
+      border-radius: 5px;
       transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-      box-shadow: 0 0 12px #00ffcc;
+      box-shadow: 0 0 15px var(--theme-glow);
     }
     
-    /* Стилизованные Очки и Комбо */
-    .stats-box { 
-      background: rgba(15, 20, 25, 0.85);
-      backdrop-filter: blur(5px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-bottom: 3px solid #f1c40f;
-      border-radius: 16px;
-      padding: 10px 20px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-      display:flex; flex-direction: column; align-items: flex-end;
+    /* === ОЧКИ И КОМБО === */
+    .s-wrap { border-radius: 20px; }
+    .s-inner { padding: 12px 24px; flex-direction: column; gap: 4px; border-radius: 17px; }
+    .score-val { 
+      font-family: 'Fredoka One', cursive; font-size: 5vmin; 
+      color: var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow); line-height: 1; 
     }
-    .score-text { font-size: 3.5vmin; font-family: 'Fredoka One', cursive; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); color: #fff; }
-    .score-text span { color: #f1c40f; }
-    .combo-badge { font-size: 2.5vmin; font-weight: 900; color: #ff5e5e; margin-top: 4px; text-shadow: 0 0 8px rgba(255, 94, 94, 0.6); }
-
-    /* Плашка с вопросом */
-    .question-box {
-      background: rgba(20, 25, 35, 0.9);
-      backdrop-filter: blur(8px);
-      color: #fff; padding: 20px 40px; border-radius: 20px;
-      font-size: 4.5vmin; font-weight: bold; display: inline-block;
-      border: 2px solid rgba(255,255,255,0.1);
-      border-top: 3px solid #00ffcc;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.7), 0 0 20px rgba(0,255,204,0.2);
-      max-width: 85%; transition: all 0.3s;
+    .combo-badge { 
+      font-size: 2vmin; font-weight: 900; color: #fff; opacity: 0.9;
     }
 
-    canvas { display: block; width: 100%; height: 100%; }
+    canvas { display: block; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1;}
 
     .overlay {
       position: absolute; inset: 0; z-index: 100; background: rgba(10, 10, 10, 0.95);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       color: white; text-align: center;
     }
-    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 20px rgba(0,255,204,0.5); }
+    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 20px var(--theme-glow); }
     
     /* === 3D КНОПКА === */
     .btn {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #fff;
-      font-family: 'Fredoka One', cursive;
-      border-radius: 50px;
-      cursor: pointer;
-      pointer-events: auto;
+      position: absolute; left: 50%; transform: translateX(-50%);
+      color: #fff; font-family: 'Fredoka One', cursive;
+      border-radius: 50px; cursor: pointer; pointer-events: auto;
       transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-      text-transform: uppercase;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      
-      /* 3D Эффект, Блики и Свечение */
+      text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
       background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.2) 100%), var(--btn-color);
       border: 2px solid rgba(255,255,255,0.4);
-      box-shadow: 
-        inset 0 6px 0 rgba(255,255,255,0.3),  /* Верхний блик фаски */
-        inset 0 -6px 0 rgba(0,0,0,0.3),       /* Нижняя тень фаски */
-        0 0 25px var(--btn-glow),             /* Неоновое свечение */
-        0 10px 20px rgba(0,0,0,0.7);          /* Внешняя тень */
+      box-shadow: inset 0 6px 0 rgba(255,255,255,0.3), inset 0 -6px 0 rgba(0,0,0,0.3), 0 0 25px var(--btn-glow), 0 10px 20px rgba(0,0,0,0.7);
     }
-
     .btn:active { 
       transform: translateX(-50%) translateY(8px) scale(0.95) !important; 
-      box-shadow: 
-        inset 0 2px 0 rgba(255,255,255,0.3), 
-        inset 0 -2px 0 rgba(0,0,0,0.3), 
-        0 0 15px var(--btn-glow), 
-        0 2px 5px rgba(0,0,0,0.7);
+      box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.3), 0 0 15px var(--btn-glow), 0 2px 5px rgba(0,0,0,0.7);
       filter: brightness(0.9);
     }
     
-    /* Анимации кнопки */
     @keyframes pulse3D {
       0% { transform: translateX(-50%) scale(1); filter: brightness(1); }
       50% { transform: translateX(-50%) scale(1.05); filter: brightness(1.2); box-shadow: inset 0 6px 0 rgba(255,255,255,0.4), inset 0 -6px 0 rgba(0,0,0,0.3), 0 0 40px var(--btn-glow), 0 15px 25px rgba(0,0,0,0.8); }
@@ -147,10 +149,9 @@
     }
     .anim-glitch { animation: glitchEff 3s infinite; }
     
-    /* Всплывающий текст */
     .floating-text {
       position: absolute; font-family: 'Fredoka One', cursive;
-      font-size: 4.5vmin; color: #fff; 
+      font-size: 5vmin; color: #fff; 
       pointer-events: none; z-index: 50; animation: floatUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
     @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 20% { transform: translateY(-20px) scale(1.2); opacity: 1; } 100% { transform: translateY(-100px) scale(1); opacity: 0; } }
@@ -159,19 +160,31 @@
 <body>
 
 <div id="game-app">
-  <div class="ui-layer" id="ui-layer" style="display:none;">
-    <div class="top-bar">
-      <div class="progress-wrapper"><div class="progress-fill" id="progress-fill"></div></div>
-      <div class="stats-box">
-        <div class="score-text">ОЧКИ: <span id="score-display">0</span></div>
-        <div class="combo-badge">🔥 КОМБО: x<span id="combo-display">1.0</span></div>
-      </div>
-    </div>
-    <div class="question-box" id="question-text">Загрузка...</div>
-  </div>
-
   <canvas id="gameCanvas"></canvas>
   <div id="floaty-container"></div>
+
+  <div class="ui-layer" id="ui-layer" style="display:none;">
+    <div class="hud-header">
+      <div class="hud-center">
+        <div class="glowing-wrap">
+          <div class="glowing-inner q-inner" id="question-text">Загрузка...</div>
+        </div>
+        <div class="glowing-wrap p-wrap">
+          <div class="glowing-inner p-inner">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="glowing-wrap s-wrap">
+        <div class="glowing-inner s-inner">
+          <div class="score-val" id="score-display">0</div>
+          <div class="combo-badge">🔥 КОМБО: x<span id="combo-display">1.0</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div id="start-screen" class="overlay">
     <h1 id="uiTitle">QUIZ MINER</h1>
@@ -182,7 +195,7 @@
   <div id="end-screen" class="overlay" style="display:none;">
     <h1 style="font-size: 15vmin; text-shadow:none;" id="end-emoji">🏆</h1>
     <h1 id="end-title" style="font-family: inherit;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
-    <p style="font-size: 6vmin; font-weight: bold; color:#00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.5);" id="end-score">Счёт: 0</p>
+    <p style="font-size: 6vmin; font-weight: bold; color:var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow);" id="end-score">0</p>
     <button class="btn" id="btnAgain">ЕЩЁ РАЗ</button>
   </div>
 </div>
@@ -202,10 +215,10 @@
     },
     visual: { 
       bgTransparent: false,
-      hero: "hero.png", hook: "hook.png", hookSound: "https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3", targets: ["target.png"], 
+      hero: "hero.png", hook: "hook.png", hookSound: "", targets: ["target.png"], 
       ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
       heroSize: 150, heroX: 0, hookSize: 60, hookOffsetY: 0, targetSize: 90,
-      fontFamily: "Montserrat", qColor: "#111111", qGlow: "#000000", qSize: 4.5,
+      fontFamily: "Montserrat", qColor: "#ffffff", qGlow: "#000000", qSize: 4.5,
       tColor: "#ffffff", tGlow: "#000000", tSize: 22
     },
     gameplay: { hookSpeed: 10, swingSpeed: 0.035 }, 
@@ -238,19 +251,14 @@
 
   function applyButtonStyle(btn) {
     const size = CFG.ui.btnSize || 5;
-    const color = CFG.ui.btnColor || "#e74c3c";
-    const glow = CFG.ui.btnGlow || "#c0392b";
-    const yPos = CFG.ui.btnY || 80;
+    document.documentElement.style.setProperty('--btn-color', CFG.ui.btnColor || "#e74c3c");
+    document.documentElement.style.setProperty('--btn-glow', CFG.ui.btnGlow || "#c0392b");
 
     btn.style.fontSize = `${size}vmin`;
     btn.style.padding = `${size * 0.5}vmin ${size * 2}vmin`;
-    btn.style.top = `${yPos}%`;
+    btn.style.top = `${CFG.ui.btnY || 80}%`;
 
-    // Передаем цвета в CSS переменные
-    document.documentElement.style.setProperty('--btn-color', color);
-    document.documentElement.style.setProperty('--btn-glow', glow);
-
-    btn.className = 'btn'; // Сброс
+    btn.className = 'btn'; 
     if (CFG.ui.btnAnim === 'pulse') btn.classList.add('anim-pulse');
     if (CFG.ui.btnAnim === 'glitch') btn.classList.add('anim-glitch');
   }
@@ -284,12 +292,14 @@
 
     if (CFG.visual.hookSound) hookAudio.src = CFG.visual.hookSound;
 
-    const qb = document.getElementById('question-text');
-    // Используем цвет из редактора, но делаем его полупрозрачным для эффекта стекла
-    qb.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
-    qb.style.color = CFG.visual.qColor || "#ffffff";
-    qb.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
-    qb.style.textShadow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? `0 0 15px ${CFG.visual.qGlow}` : 'none';
+    // Цвет неоновой бегающей рамки (если не задан, будет бирюзовый)
+    let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "#00ffcc";
+    document.documentElement.style.setProperty('--theme-glow', themeGlow);
+
+    const qbInner = document.querySelector('.q-inner');
+    qbInner.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
+    qbInner.style.color = CFG.visual.qColor || "#ffffff";
+    qbInner.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
 
     document.getElementById('game-app').style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
   }
@@ -301,25 +311,26 @@
   resize();
 
   const imgCache = {};
-  function renderEntity(val, x, y, size) {
-    if (!val) return false;
-    if (val.startsWith('http') || val.endsWith('.png') || val.endsWith('.jpg') || val.endsWith('.gif') || val.startsWith('data:image')) {
-      if (!imgCache[val]) {
-        const img = new Image(); 
-        img.crossOrigin = "Anonymous";
-        img.src = val; 
-        imgCache[val] = img;
-      }
-      if (imgCache[val].complete && imgCache[val].naturalWidth > 0) {
-        ctx.drawImage(imgCache[val], x - size/2, y - size/2, size, size);
-        return true; 
-      }
-    } else {
-      ctx.font = `${size}px "${CFG.visual.fontFamily}", sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(val, x, y);
-      return false; 
+  
+  // Проверка: загружена ли валидная картинка?
+  function hasValidImage(val) {
+    if (!val || val.trim() === '') return false;
+    if (!imgCache[val]) {
+      const img = new Image(); 
+      img.crossOrigin = "Anonymous";
+      img.src = val; 
+      imgCache[val] = img;
+      return false;
     }
+    return imgCache[val].complete && imgCache[val].naturalWidth > 0;
+  }
+
+  function renderEntity(val, x, y, size) {
+    if (hasValidImage(val)) {
+      ctx.drawImage(imgCache[val], x - size/2, y - size/2, size, size);
+      return true;
+    }
+    return false;
   }
 
   function drawChain(x1, y1, x2, y2, color) {
@@ -337,21 +348,15 @@
     for (let i = 0; i < numLinks; i++) {
       ctx.beginPath();
       ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = '#111';
-      ctx.lineWidth = 6;
-      ctx.stroke();
+      ctx.strokeStyle = '#111'; ctx.lineWidth = 6; ctx.stroke();
 
       ctx.beginPath();
       ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      ctx.stroke();
+      ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
 
       ctx.beginPath();
       ctx.ellipse(i * linkLength + linkLength/2 - 1, -1, linkLength/2 - 2, 2, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255,255,255,0.7)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.lineWidth = 1; ctx.stroke();
     }
     ctx.restore();
   }
@@ -408,32 +413,42 @@
       (task.wrong || []).forEach(w => { if(w.trim()) allAnswers.push({ text: w.trim(), isCorrect: false }); });
       allAnswers.sort(() => Math.random() - 0.5);
 
-      const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : ["target.png"];
-      assetsList.sort(() => Math.random() - 0.5); 
-
-      // Улучшенная логика распределения мишеней, чтобы они не слипались
+      const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : [""];
+      
       const targetW = CFG.visual.targetSize || 90;
-      const cols = Math.min(3, allAnswers.length); // Максимум 3 в ряд
-      const rows = Math.ceil(allAnswers.length / cols);
-      const zoneWidth = canvas.width / cols; 
-      const startY = canvas.height * 0.3; // Опускаем чуть ниже вопроса
-
-      allAnswers.forEach((ans, i) => {
-        const col = i % cols; 
-        const row = Math.floor(i / cols); 
-        const minX = col * zoneWidth + targetW/2 + 20;
-        const maxX = (col + 1) * zoneWidth - targetW/2 - 20;
-        
-        this.targets.push({
-          text: ans.text, 
-          isCorrect: ans.isCorrect,
-          asset: assetsList[i % assetsList.length], 
-          minX: minX, maxX: maxX,
-          x: minX + Math.random() * (Math.max(0, maxX - minX)),
-          y: startY + (row * (targetW + 60)), // Расстояние между рядами
-          w: targetW, h: targetW,
-          speed: (Math.random() * 1.5 + 1.0) * (Math.random() > 0.5 ? 1 : -1) 
-        });
+      
+      // ИДЕАЛЬНАЯ СЕТКА: 2 колонки максимум
+      const maxCols = 2; 
+      const rows = [];
+      for(let i=0; i<allAnswers.length; i+=maxCols) {
+          rows.push(allAnswers.slice(i, i+maxCols));
+      }
+      
+      // Стартуем СТРОГО ниже плашки вопроса (25% высоты или 180px)
+      const startY = Math.max(180, canvas.height * 0.25);
+      const rowHeight = targetW + 80; 
+      
+      let answerIndex = 0;
+      rows.forEach((rowItems, r) => {
+          const zoneWidth = canvas.width / rowItems.length;
+          rowItems.forEach((ans, c) => {
+              const minX = c * zoneWidth + targetW/2 + 20;
+              const maxX = (c + 1) * zoneWidth - targetW/2 - 20;
+              
+              this.targets.push({
+                 text: ans.text,
+                 isCorrect: ans.isCorrect,
+                 asset: assetsList[answerIndex % assetsList.length],
+                 minX: minX,
+                 maxX: Math.max(minX, maxX),
+                 x: minX + Math.random() * Math.max(0, maxX - minX),
+                 y: startY + (r * rowHeight),
+                 w: targetW, h: targetW,
+                 hitX: 0, hitY: 0, hitW: 0, hitH: 0, // Вычисляются в draw
+                 speed: (Math.random() * 1.5 + 1.0) * (c % 2 === 0 ? 1 : -1)
+              });
+              answerIndex++;
+          });
       });
 
       this.hookState = 'swinging'; this.hook.length = 80;
@@ -457,11 +472,11 @@
       const speed = CFG.gameplay.hookSpeed || 10;
       const swingSpeed = CFG.gameplay.swingSpeed || 0.035;
       
-      // Крюк ВСЕГДА строго по центру экрана
       this.hook.x = canvas.width / 2;
       this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
 
       this.targets.forEach(t => {
+        // Движение ТОЛЬКО по горизонтали
         t.x += t.speed;
         if (t.x > t.maxX) { t.x = t.maxX; t.speed *= -1; }
         if (t.x < t.minX) { t.x = t.minX; t.speed *= -1; }
@@ -478,7 +493,8 @@
 
         for (let i = 0; i < this.targets.length; i++) {
           let t = this.targets[i];
-          if (Math.abs(hx - t.x) < t.w/2 && Math.abs(hy - t.y) < t.h/2) {
+          // Идеальная проверка столкновений по реальной коробке (картинке ИЛИ тексту)
+          if (Math.abs(hx - t.hitX) < t.hitW/2 && Math.abs(hy - t.hitY) < t.hitH/2) {
             this.hookState = 'retracting';
             this.hook.caughtTarget = t; 
             this.targets.splice(i, 1); 
@@ -522,9 +538,8 @@
               this.combo = 1.0;
               document.getElementById('combo-display').textContent = this.combo.toFixed(1);
               this.spawnFloaty("ПРОМАХ!", this.hook.x, this.hook.y - 120, '#e74c3c', '#c0392b');
-              document.getElementById('question-text').textContent = "Ой! Не та мишень!";
+              document.getElementById('question-text').textContent = "Не то!";
               
-              caught.y = canvas.height * 0.3; 
               this.targets.push(caught);
               setTimeout(() => this.loadTask(), 1200);
             }
@@ -534,29 +549,43 @@
     },
 
     drawTargetEl(t) {
-        renderEntity(t.asset, t.x, t.y, CFG.visual.targetSize || 90);
+        const hasImg = hasValidImage(t.asset);
 
         ctx.font = `bold ${CFG.visual.tSize || 22}px "${CFG.visual.fontFamily}", sans-serif`;
         const textMet = ctx.measureText(t.text);
-        const paddingX = 20;
-        const tw = textMet.width + paddingX;
+        const paddingX = 30;
+        const tw = Math.max(textMet.width + paddingX, 60);
         const th = (CFG.visual.tSize || 22) + 16;
-        const textY = t.y - (CFG.visual.targetSize || 90)/2 - th/2 - 10;
+        
+        let textY;
 
-        // Стеклянная плашка для текста мишени
-        ctx.fillStyle = 'rgba(15, 20, 25, 0.8)';
-        ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 12); ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2; ctx.stroke();
-        ctx.strokeStyle = 'rgba(0, 255, 204, 0.6)'; ctx.lineWidth = 1; ctx.stroke(); // Тонкая неоновая обводка
-
-        if (CFG.visual.tGlow && CFG.visual.tGlow !== "#000000") {
-          ctx.shadowColor = CFG.visual.tGlow;
-          ctx.shadowBlur = 10;
+        if (hasImg) {
+          // Если есть картинка: рисуем ее, а текст НАД ней
+          renderEntity(t.asset, t.x, t.y, t.w);
+          textY = t.y - t.h/2 - th/2 - 5;
+          
+          // Хитбокс - это сама картинка
+          t.hitX = t.x; t.hitY = t.y; t.hitW = t.w; t.hitH = t.h;
+        } else {
+          // Если картинки НЕТ: текст центрируется
+          textY = t.y;
+          
+          // Хитбокс - это плашка текста
+          t.hitX = t.x; t.hitY = textY; t.hitW = tw; t.hitH = th;
         }
+
+        // Рисуем стеклянную плашку ответа
+        ctx.fillStyle = 'rgba(15, 20, 25, 0.9)';
+        ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 15); ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2; ctx.stroke();
+        
+        // Цветная обводка плашки
+        let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "rgba(0, 255, 204, 0.5)";
+        ctx.strokeStyle = themeGlow; ctx.lineWidth = 1; ctx.stroke(); 
+
         ctx.fillStyle = CFG.visual.tColor || '#ffffff';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(t.text, t.x, textY);
-        ctx.shadowBlur = 0; 
     },
 
     draw() {
@@ -565,7 +594,6 @@
       this.targets.forEach(t => this.drawTargetEl(t));
       if (this.hook.caughtTarget) this.drawTargetEl(this.hook.caughtTarget);
 
-      // Крюк СТРОГО ПО ЦЕНТРУ
       this.hook.x = canvas.width / 2;
       this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
       const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
@@ -574,7 +602,6 @@
       drawChain(this.hook.x, this.hook.y, hx, hy, CFG.visual.ropeColor || "#bdc3c7");
       renderEntity(CFG.visual.hook || "hook.png", hx, hy, CFG.visual.hookSize || 60);
 
-      // Персонаж СМЕЩАЕТСЯ относительно центра
       const heroX = (canvas.width / 2) + (CFG.visual.heroX || 0);
       const heroY = canvas.height - (CFG.visual.heroSize || 150)/2; 
       renderEntity(CFG.visual.hero || "hero.png", heroX, heroY, CFG.visual.heroSize || 150);
@@ -591,7 +618,7 @@
       document.getElementById('ui-layer').style.display = 'none';
       document.getElementById('end-screen').style.display = 'flex';
       document.getElementById('end-title').textContent = CFG.ui.win || "КВИЗ ПРОЙДЕН!";
-      document.getElementById('end-score').textContent = "ИТОГОВЫЙ СЧЁТ: " + this.score;
+      document.getElementById('end-score').textContent = this.score;
       confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: [CFG.visual.ropeColor, '#f1c40f', '#00ffcc'] });
     }
   };

@@ -50,6 +50,7 @@
     input[type=color] { height: 40px; cursor: pointer; padding: 2px; }
     textarea{ min-height:80px; resize:vertical; }
     input:focus,textarea:focus,select:focus{ border-color:var(--primary); }
+    input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; }
 
     .tabbar{ display:flex; gap:6px; margin-top:10px; flex-wrap: wrap;}
     .tab{
@@ -88,24 +89,9 @@
       font-weight:800; opacity:0; transition:.2s; pointer-events:none;
     }
     .toast.show{ opacity:1; }
-
-    .pass-overlay{ position:fixed; inset:0; background:rgba(0,0,0,.86); display:none; align-items:center; justify-content:center; z-index:110000; }
-    body.locked .pass-overlay{ display:flex; }
-    body.locked .wrap { display:none; }
-    .pass-card{ background:#fff; border-radius:18px; padding:18px; text-align:center; }
-    .pass-input{ padding:10px; border-radius:10px; border:2px solid #ddd; text-align:center; font-weight:bold; }
   </style>
 </head>
-<body class="locked">
-
-  <div class="pass-overlay" id="passOverlay">
-    <div class="pass-card">
-      <h3>🔒 Редактор Quiz Miner</h3>
-      <input class="pass-input" id="passInput" type="password" placeholder="Пароль">
-      <button class="btn primary" id="passBtn">Войти</button>
-      <div id="passErr" style="color:red; display:none; margin-top:10px;">Неверный пароль</div>
-    </div>
-  </div>
+<body>
 
   <div class="bg-float" style="left:10%;">💰</div>
   <div class="bg-float" style="left:80%; animation-delay:-5s;">⛏️</div>
@@ -150,6 +136,14 @@
             <h2>⚙️ Тексты кнопок</h2>
             <div class="grid2">
               <div><label>Заголовок игры</label><input id="ui_title" type="text" value="QUIZ MINER"></div>
+              <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
+                <label>Скрыть текст заголовка</label>
+                <input id="ui_hide_title" type="checkbox">
+              </div>
+              <div style="grid-column: 1 / -1">
+                <label>Титульная картинка (URL, отобразится на старте)</label>
+                <input id="ui_title_img" type="text" placeholder="title.png">
+              </div>
               <div><label>Текст победы</label><input id="ui_win" type="text" value="КВИЗ ПРОЙДЕН!"></div>
               <div><label>Кнопка Старт</label><input id="ui_start" type="text" value="СТАРТ"></div>
               <div><label>Кнопка Повтор</label><input id="ui_again" type="text" value="ЕЩЁ РАЗ"></div>
@@ -159,11 +153,12 @@
 
         <div class="tabPanel" data-panel="visual">
           <div class="card">
-            <h2>🎨 Изображения (Ссылки)</h2>
+            <h2>🎨 Изображения и Звуки (Ссылки)</h2>
             <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif). Каждая мишень с новой строки (будут браться рандомно).</p>
             <div class="qStack">
               <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="hero.png"></div>
               <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="hook.png"></div>
+              <div><label>Звук крюка (URL)</label><input id="sound_hook" type="text" value="https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3"></div>
               <div><label>Мишени (Targets)</label><textarea id="img_target" placeholder="target.png&#10;target2.png">target.png</textarea></div>
             </div>
           </div>
@@ -171,11 +166,19 @@
           <div class="card">
             <h2>✨ Стили и Размеры</h2>
             <div class="grid2">
+              <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
+                <label>Прозрачный фон игры</label>
+                <input id="bg_transparent" type="checkbox">
+              </div>
               <div><label>Цвет 3D-цепи</label><input id="color_rope" type="color" value="#7f8c8d"></div>
               <div><label>Фон вопроса</label><input id="color_qbox" type="color" value="#ffffff"></div>
               <div>
                 <label>Размер персонажа</label>
                 <input id="hero_size" type="range" min="40" max="250" value="150">
+              </div>
+              <div>
+                <label>Смещение персонажа по горизонтали (X)</label>
+                <input id="hero_x" type="range" min="-300" max="300" value="0">
               </div>
               <div>
                 <label>Размер мишеней</label>
@@ -252,14 +255,20 @@
   <div class="toast" id="toast">Скопировано!</div>
 
 <script>
-  const ACCESS_PASSWORD = "WITCHY-2026";
-  document.getElementById('passBtn').onclick = () => {
-    if(document.getElementById('passInput').value === ACCESS_PASSWORD) {
-      document.body.classList.remove("locked");
-    } else {
-      document.getElementById('passErr').style.display = "block";
+  // --- БЛОКИРОВКА ПРАВОЙ КНОПКИ МЫШИ ВНЕ ПОЛЕЙ ВВОДА ---
+  document.addEventListener('contextmenu', (e) => {
+    const t = e.target.tagName;
+    if (t !== 'INPUT' && t !== 'TEXTAREA' && t !== 'SELECT') {
+      e.preventDefault();
     }
-  };
+  });
+
+  // --- БЛОКИРОВКА КЛАВИШИ F12 ---
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12' || e.keyCode === 123) {
+      e.preventDefault();
+    }
+  });
 
   const BASE_MAIN = "https://nikashum93.github.io/hk/main.html"; 
   const ENDPOINT = "https://server-kjnn.onrender.com/publish";
@@ -296,18 +305,23 @@
     return {
       ui: {
         title: document.getElementById('ui_title').value || "QUIZ MINER",
+        hideTitle: document.getElementById('ui_hide_title').checked,
+        titleImg: document.getElementById('ui_title_img').value || "",
         win: document.getElementById('ui_win').value || "КВИЗ ПРОЙДЕН!",
         start: document.getElementById('ui_start').value || "СТАРТ",
         again: document.getElementById('ui_again').value || "ЕЩЁ РАЗ"
       },
       visual: {
+        bgTransparent: document.getElementById('bg_transparent').checked,
         hero: document.getElementById('img_hero').value || "hero.png",
         hook: document.getElementById('img_hook').value || "hook.png",
+        hookSound: document.getElementById('sound_hook').value || "",
         targets: parseLines(document.getElementById('img_target').value).filter(x=>x),
         targetSize: parseInt(document.getElementById('target_size').value) || 90,
         ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
         qBoxColor: document.getElementById('color_qbox').value || "#ffffff",
         heroSize: parseInt(document.getElementById('hero_size').value) || 150,
+        heroX: parseInt(document.getElementById('hero_x').value) || 0,
         hookSize: parseInt(document.getElementById('hook_size').value) || 60,
         hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0,
         fontFamily: document.getElementById('font_family').value || 'Montserrat',
@@ -351,7 +365,7 @@
 
       if(!res.ok) throw new Error("Server error");
 
-      lastIframe = `<iframe src="${BASE_MAIN}?id=${id}" width="100%" height="650" style="border:0;" allow="fullscreen"></iframe>`;
+      lastIframe = `<iframe src="${BASE_MAIN}?id=${id}" width="100%" height="650" style="border:0;" allow="fullscreen; autoplay"></iframe>`;
       document.getElementById('statusPill').textContent = 'Готово ✅';
       toast('Игра создана ✅');
     } catch(e) {

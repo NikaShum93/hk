@@ -9,6 +9,11 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
+    :root {
+      --btn-color: #e74c3c;
+      --btn-glow: #c0392b;
+    }
+    
     * { box-sizing: border-box; }
     html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#111; }
     
@@ -25,36 +30,61 @@
 
     #game-app.transparent-bg { background: transparent !important; }
 
+    /* Эпичный игровой интерфейс (HUD) */
     .ui-layer {
       position: absolute; top: 0; left: 0; width: 100%;
-      padding: 15px 30px; box-sizing: border-box;
+      padding: 20px 30px; box-sizing: border-box;
       pointer-events: none; z-index: 10;
       color: white; text-align: center;
+      display: flex; flex-direction: column; align-items: center;
     }
 
     .top-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      width: 100%; max-width: 1200px;
+      margin-bottom: 20px;
     }
 
-    .progress-box {
-      width: 40%; height: 16px; background: rgba(0,0,0,0.5);
-      border-radius: 8px; border: 2px solid #fff; overflow: hidden;
+    /* Стилизованный Прогресс-бар */
+    .progress-wrapper {
+      width: 40%; background: rgba(0, 0, 0, 0.6);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px; padding: 4px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 5px 15px rgba(0,0,0,0.5);
     }
-    .progress-fill { width: 0%; height: 100%; background: #00ffcc; transition: width 0.3s; box-shadow: 0 0 10px #00ffcc;}
+    .progress-fill { 
+      width: 0%; height: 16px; 
+      background: linear-gradient(90deg, #00ffcc, #00b38f);
+      border-radius: 8px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+      box-shadow: 0 0 12px #00ffcc;
+    }
     
-    .score-box { 
-      font-size: 3.5vmin; font-family: 'Fredoka One', cursive; text-shadow: 2px 2px 0 rgba(0,0,0,0.5); 
+    /* Стилизованные Очки и Комбо */
+    .stats-box { 
+      background: rgba(15, 20, 25, 0.85);
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-bottom: 3px solid #f1c40f;
+      border-radius: 16px;
+      padding: 10px 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
       display:flex; flex-direction: column; align-items: flex-end;
     }
-    .combo-badge { font-size: 2.5vmin; color: #f1c40f; }
+    .score-text { font-size: 3.5vmin; font-family: 'Fredoka One', cursive; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); color: #fff; }
+    .score-text span { color: #f1c40f; }
+    .combo-badge { font-size: 2.5vmin; font-weight: 900; color: #ff5e5e; margin-top: 4px; text-shadow: 0 0 8px rgba(255, 94, 94, 0.6); }
 
+    /* Плашка с вопросом */
     .question-box {
-      background: rgba(255, 255, 255, 0.95);
-      color: #111; padding: 15px 30px; border-radius: 20px;
+      background: rgba(20, 25, 35, 0.9);
+      backdrop-filter: blur(8px);
+      color: #fff; padding: 20px 40px; border-radius: 20px;
       font-size: 4.5vmin; font-weight: bold; display: inline-block;
-      box-shadow: 0 8px 15px rgba(0,0,0,0.3); max-width: 80%;
-      margin-top: 10px; transition: all 0.3s;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top: 3px solid #00ffcc;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.7), 0 0 20px rgba(0,255,204,0.2);
+      max-width: 85%; transition: all 0.3s;
     }
 
     canvas { display: block; width: 100%; height: 100%; }
@@ -64,22 +94,66 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       color: white; text-align: center;
     }
-    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 15px rgba(0,255,204,0.5); }
+    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 20px rgba(0,255,204,0.5); }
     
+    /* === 3D КНОПКА === */
     .btn {
-      background: #00ffcc; color: #111; font-size: 5vmin; padding: 15px 50px;
-      border-radius: 40px; border: none; border-bottom: 8px solid #00b38f;
-      cursor: pointer; font-family: 'Fredoka One', cursive; margin-top: 30px; pointer-events: auto;
-      transition: transform 0.1s;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      color: #fff;
+      font-family: 'Fredoka One', cursive;
+      border-radius: 50px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+      text-transform: uppercase;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+      
+      /* 3D Эффект, Блики и Свечение */
+      background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.2) 100%), var(--btn-color);
+      border: 2px solid rgba(255,255,255,0.4);
+      box-shadow: 
+        inset 0 6px 0 rgba(255,255,255,0.3),  /* Верхний блик фаски */
+        inset 0 -6px 0 rgba(0,0,0,0.3),       /* Нижняя тень фаски */
+        0 0 25px var(--btn-glow),             /* Неоновое свечение */
+        0 10px 20px rgba(0,0,0,0.7);          /* Внешняя тень */
     }
-    .btn:active { transform: translateY(4px); border-bottom-width: 4px; }
+
+    .btn:active { 
+      transform: translateX(-50%) translateY(8px) scale(0.95) !important; 
+      box-shadow: 
+        inset 0 2px 0 rgba(255,255,255,0.3), 
+        inset 0 -2px 0 rgba(0,0,0,0.3), 
+        0 0 15px var(--btn-glow), 
+        0 2px 5px rgba(0,0,0,0.7);
+      filter: brightness(0.9);
+    }
     
+    /* Анимации кнопки */
+    @keyframes pulse3D {
+      0% { transform: translateX(-50%) scale(1); filter: brightness(1); }
+      50% { transform: translateX(-50%) scale(1.05); filter: brightness(1.2); box-shadow: inset 0 6px 0 rgba(255,255,255,0.4), inset 0 -6px 0 rgba(0,0,0,0.3), 0 0 40px var(--btn-glow), 0 15px 25px rgba(0,0,0,0.8); }
+      100% { transform: translateX(-50%) scale(1); filter: brightness(1); }
+    }
+    .anim-pulse { animation: pulse3D 2s ease-in-out infinite; }
+
+    @keyframes glitchEff {
+      0% { transform: translateX(-50%); }
+      10% { transform: translateX(-52%) skewX(5deg); filter: hue-rotate(90deg) brightness(1.5); }
+      20% { transform: translateX(-48%) skewX(-5deg); filter: hue-rotate(-90deg); }
+      30% { transform: translateX(-50%); filter: hue-rotate(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .anim-glitch { animation: glitchEff 3s infinite; }
+    
+    /* Всплывающий текст */
     .floating-text {
       position: absolute; font-family: 'Fredoka One', cursive;
-      font-size: 4vmin; color: #00ffcc; text-shadow: 0 0 10px #00ffcc;
-      pointer-events: none; z-index: 50; animation: floatUp 1s ease-out forwards;
+      font-size: 4.5vmin; color: #fff; 
+      pointer-events: none; z-index: 50; animation: floatUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
-    @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.5); opacity: 0; } }
+    @keyframes floatUp { 0% { transform: translateY(0) scale(0.8); opacity: 0; } 20% { transform: translateY(-20px) scale(1.2); opacity: 1; } 100% { transform: translateY(-100px) scale(1); opacity: 0; } }
   </style>
 </head>
 <body>
@@ -87,10 +161,10 @@
 <div id="game-app">
   <div class="ui-layer" id="ui-layer" style="display:none;">
     <div class="top-bar">
-      <div class="progress-box"><div class="progress-fill" id="progress-fill"></div></div>
-      <div class="score-box">
-        <div>Очки: <span id="score-display">0</span></div>
-        <div class="combo-badge">Комбо: x<span id="combo-display">1.0</span></div>
+      <div class="progress-wrapper"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="stats-box">
+        <div class="score-text">ОЧКИ: <span id="score-display">0</span></div>
+        <div class="combo-badge">🔥 КОМБО: x<span id="combo-display">1.0</span></div>
       </div>
     </div>
     <div class="question-box" id="question-text">Загрузка...</div>
@@ -108,7 +182,7 @@
   <div id="end-screen" class="overlay" style="display:none;">
     <h1 style="font-size: 15vmin; text-shadow:none;" id="end-emoji">🏆</h1>
     <h1 id="end-title" style="font-family: inherit;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
-    <p style="font-size: 6vmin; font-weight: bold; color:#00ffcc;" id="end-score">Счёт: 0</p>
+    <p style="font-size: 6vmin; font-weight: bold; color:#00ffcc; text-shadow: 0 0 10px rgba(0,255,204,0.5);" id="end-score">Счёт: 0</p>
     <button class="btn" id="btnAgain">ЕЩЁ РАЗ</button>
   </div>
 </div>
@@ -121,14 +195,18 @@
   const JSON_BASES = ["https://nikashum93.github.io/texts/data/", "https://nikashum93.github.io/data/"];
 
   let CFG = {
-    ui: { title: "QUIZ MINER", hideTitle: false, titleImg: "", start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!" },
+    ui: { 
+      title: "КРЮКОХВАТ", hideTitle: false, titleImg: "", 
+      start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!",
+      btnColor: "#e74c3c", btnGlow: "#c0392b", btnSize: 5, btnY: 80, btnAnim: "none"
+    },
     visual: { 
       bgTransparent: false,
-      hero: "hero.png", hook: "hook.png", hookSound: "", targets: ["target.png"], 
+      hero: "hero.png", hook: "hook.png", hookSound: "https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3", targets: ["target.png"], 
       ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
       heroSize: 150, heroX: 0, hookSize: 60, hookOffsetY: 0, targetSize: 90,
       fontFamily: "Montserrat", qColor: "#111111", qGlow: "#000000", qSize: 4.5,
-      tColor: "#000000", tGlow: "#000000", tSize: 22
+      tColor: "#ffffff", tGlow: "#000000", tSize: 22
     },
     gameplay: { hookSpeed: 10, swingSpeed: 0.035 }, 
     tasks: [] 
@@ -158,16 +236,37 @@
     } catch (e) { document.getElementById('cfgNote').textContent = '⚠️ Конфиг не найден'; }
   }
 
+  function applyButtonStyle(btn) {
+    const size = CFG.ui.btnSize || 5;
+    const color = CFG.ui.btnColor || "#e74c3c";
+    const glow = CFG.ui.btnGlow || "#c0392b";
+    const yPos = CFG.ui.btnY || 80;
+
+    btn.style.fontSize = `${size}vmin`;
+    btn.style.padding = `${size * 0.5}vmin ${size * 2}vmin`;
+    btn.style.top = `${yPos}%`;
+
+    // Передаем цвета в CSS переменные
+    document.documentElement.style.setProperty('--btn-color', color);
+    document.documentElement.style.setProperty('--btn-glow', glow);
+
+    btn.className = 'btn'; // Сброс
+    if (CFG.ui.btnAnim === 'pulse') btn.classList.add('anim-pulse');
+    if (CFG.ui.btnAnim === 'glitch') btn.classList.add('anim-glitch');
+  }
+
   function applyUI() {
-    // Тексты кнопок и победы
-    document.getElementById('uiTitle').textContent = CFG.ui.title || "QUIZ MINER";
-    document.getElementById('btnStart').textContent = CFG.ui.start || "СТАРТ";
-    document.getElementById('btnAgain').textContent = CFG.ui.again || "ЕЩЁ РАЗ";
-    
-    // Скрытие заголовка
+    document.getElementById('uiTitle').textContent = CFG.ui.title || "КРЮКОХВАТ";
     document.getElementById('uiTitle').style.display = CFG.ui.hideTitle ? 'none' : 'block';
 
-    // Титульное изображение как фон 16:9
+    const btnStart = document.getElementById('btnStart');
+    const btnAgain = document.getElementById('btnAgain');
+    btnStart.textContent = CFG.ui.start || "СТАРТ";
+    btnAgain.textContent = CFG.ui.again || "ЕЩЁ РАЗ";
+    
+    applyButtonStyle(btnStart);
+    applyButtonStyle(btnAgain);
+
     const startScreen = document.getElementById('start-screen');
     if (CFG.ui.titleImg && CFG.ui.titleImg.trim() !== "") {
       startScreen.style.background = `url("${CFG.ui.titleImg}") center/cover no-repeat`;
@@ -175,7 +274,6 @@
       startScreen.style.background = `rgba(10, 10, 10, 0.95)`;
     }
 
-    // Прозрачный фон
     if (CFG.visual.bgTransparent) {
       document.body.classList.add('transparent-bg');
       document.getElementById('game-app').classList.add('transparent-bg');
@@ -184,23 +282,14 @@
       document.getElementById('game-app').classList.remove('transparent-bg');
     }
 
-    // Загрузка звука
-    if (CFG.visual.hookSound) {
-      hookAudio.src = CFG.visual.hookSound;
-    }
+    if (CFG.visual.hookSound) hookAudio.src = CFG.visual.hookSound;
 
-    // Настройка шрифтов и цветов коробки с вопросом
     const qb = document.getElementById('question-text');
-    qb.style.background = CFG.visual.qBoxColor;
+    // Используем цвет из редактора, но делаем его полупрозрачным для эффекта стекла
     qb.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
-    qb.style.color = CFG.visual.qColor || "#111111";
+    qb.style.color = CFG.visual.qColor || "#ffffff";
     qb.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
-    
-    if(CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") {
-        qb.style.textShadow = `0 0 10px ${CFG.visual.qGlow}`;
-    } else {
-        qb.style.textShadow = 'none';
-    }
+    qb.style.textShadow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? `0 0 15px ${CFG.visual.qGlow}` : 'none';
 
     document.getElementById('game-app').style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
   }
@@ -248,8 +337,8 @@
     for (let i = 0; i < numLinks; i++) {
       ctx.beginPath();
       ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = '#222';
-      ctx.lineWidth = 5;
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 6;
       ctx.stroke();
 
       ctx.beginPath();
@@ -290,16 +379,16 @@
       this.score = 0; this.combo = 1.0; this.currentTaskIndex = 0;
       this.state = 'playing';
       document.getElementById('start-screen').style.display = 'none';
-      document.getElementById('ui-layer').style.display = 'block';
+      document.getElementById('ui-layer').style.display = 'flex';
       this.loadTask();
       this.loop();
     },
 
-    spawnFloaty(text, x, y, color) {
+    spawnFloaty(text, x, y, color, shadowColor) {
       const fc = document.getElementById('floaty-container');
       const el = document.createElement('div');
       el.className = 'floating-text'; el.textContent = text;
-      el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color; el.style.textShadow = `0 0 10px ${color}`;
+      el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color; el.style.textShadow = `0 0 15px ${shadowColor}, 0 2px 4px #000`;
       fc.appendChild(el);
       setTimeout(() => el.remove(), 1000);
     },
@@ -322,13 +411,16 @@
       const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : ["target.png"];
       assetsList.sort(() => Math.random() - 0.5); 
 
+      // Улучшенная логика распределения мишеней, чтобы они не слипались
       const targetW = CFG.visual.targetSize || 90;
-      const rowCapacity = Math.max(2, Math.ceil(allAnswers.length / 2)); 
-      const zoneWidth = canvas.width / rowCapacity; 
+      const cols = Math.min(3, allAnswers.length); // Максимум 3 в ряд
+      const rows = Math.ceil(allAnswers.length / cols);
+      const zoneWidth = canvas.width / cols; 
+      const startY = canvas.height * 0.3; // Опускаем чуть ниже вопроса
 
       allAnswers.forEach((ans, i) => {
-        const row = i % 2; 
-        const col = Math.floor(i / 2); 
+        const col = i % cols; 
+        const row = Math.floor(i / cols); 
         const minX = col * zoneWidth + targetW/2 + 20;
         const maxX = (col + 1) * zoneWidth - targetW/2 - 20;
         
@@ -337,8 +429,8 @@
           isCorrect: ans.isCorrect,
           asset: assetsList[i % assetsList.length], 
           minX: minX, maxX: maxX,
-          x: minX + Math.random() * (maxX - minX),
-          y: canvas.height * 0.25 + (row * 120),
+          x: minX + Math.random() * (Math.max(0, maxX - minX)),
+          y: startY + (row * (targetW + 60)), // Расстояние между рядами
           w: targetW, h: targetW,
           speed: (Math.random() * 1.5 + 1.0) * (Math.random() > 0.5 ? 1 : -1) 
         });
@@ -352,7 +444,6 @@
         this.hookState = 'shooting';
         this.hook.maxLength = canvas.height * 1.2;
         
-        // Воспроизведение звука при выстреле
         if (CFG.visual.hookSound) {
             hookAudio.currentTime = 0;
             hookAudio.play().catch(e => console.log('Audio error:', e));
@@ -366,8 +457,8 @@
       const speed = CFG.gameplay.hookSpeed || 10;
       const swingSpeed = CFG.gameplay.swingSpeed || 0.035;
       
-      // Смещение центра (игрока и крюка) по X
-      this.hook.x = (canvas.width / 2) + (CFG.visual.heroX || 0);
+      // Крюк ВСЕГДА строго по центру экрана
+      this.hook.x = canvas.width / 2;
       this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
 
       this.targets.forEach(t => {
@@ -419,19 +510,21 @@
             if (caught.isCorrect) {
               let pts = Math.floor(100 * this.combo);
               this.score += pts;
-              this.spawnFloaty(`+${pts} (x${this.combo.toFixed(1)})`, this.hook.x, this.hook.y - 120, '#00ffcc');
+              this.spawnFloaty(`+${pts}`, this.hook.x, this.hook.y - 120, '#00ffcc', '#00ffcc');
+              if(this.combo > 1.0) this.spawnFloaty(`x${this.combo.toFixed(1)}`, this.hook.x + 40, this.hook.y - 90, '#f1c40f', '#f39c12');
+              
               this.combo = Math.min(this.combo + 0.5, 5.0);
               
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.9 }, colors: [CFG.visual.ropeColor, '#ffffff'] });
+              confetti({ particleCount: 100, spread: 70, origin: { y: 0.9 }, colors: [CFG.visual.ropeColor, '#f1c40f', '#00ffcc'] });
               this.currentTaskIndex++;
               setTimeout(() => this.loadTask(), 800);
             } else {
               this.combo = 1.0;
               document.getElementById('combo-display').textContent = this.combo.toFixed(1);
-              this.spawnFloaty("Промах!", this.hook.x, this.hook.y - 120, '#e74c3c');
+              this.spawnFloaty("ПРОМАХ!", this.hook.x, this.hook.y - 120, '#e74c3c', '#c0392b');
               document.getElementById('question-text').textContent = "Ой! Не та мишень!";
               
-              caught.y = canvas.height * 0.25; 
+              caught.y = canvas.height * 0.3; 
               this.targets.push(caught);
               setTimeout(() => this.loadTask(), 1200);
             }
@@ -445,19 +538,22 @@
 
         ctx.font = `bold ${CFG.visual.tSize || 22}px "${CFG.visual.fontFamily}", sans-serif`;
         const textMet = ctx.measureText(t.text);
-        const tw = textMet.width + 24;
-        const th = (CFG.visual.tSize || 22) + 14;
-        const textY = t.y - (CFG.visual.targetSize || 90)/2 - th/2 - 8;
+        const paddingX = 20;
+        const tw = textMet.width + paddingX;
+        const th = (CFG.visual.tSize || 22) + 16;
+        const textY = t.y - (CFG.visual.targetSize || 90)/2 - th/2 - 10;
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 10); ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.lineWidth = 2; ctx.stroke();
+        // Стеклянная плашка для текста мишени
+        ctx.fillStyle = 'rgba(15, 20, 25, 0.8)';
+        ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 12); ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.strokeStyle = 'rgba(0, 255, 204, 0.6)'; ctx.lineWidth = 1; ctx.stroke(); // Тонкая неоновая обводка
 
         if (CFG.visual.tGlow && CFG.visual.tGlow !== "#000000") {
           ctx.shadowColor = CFG.visual.tGlow;
-          ctx.shadowBlur = 8;
+          ctx.shadowBlur = 10;
         }
-        ctx.fillStyle = CFG.visual.tColor || '#000000';
+        ctx.fillStyle = CFG.visual.tColor || '#ffffff';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(t.text, t.x, textY);
         ctx.shadowBlur = 0; 
@@ -469,15 +565,16 @@
       this.targets.forEach(t => this.drawTargetEl(t));
       if (this.hook.caughtTarget) this.drawTargetEl(this.hook.caughtTarget);
 
-      this.hook.x = (canvas.width / 2) + (CFG.visual.heroX || 0);
+      // Крюк СТРОГО ПО ЦЕНТРУ
+      this.hook.x = canvas.width / 2;
       this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
       const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
       const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
 
       drawChain(this.hook.x, this.hook.y, hx, hy, CFG.visual.ropeColor || "#bdc3c7");
-
       renderEntity(CFG.visual.hook || "hook.png", hx, hy, CFG.visual.hookSize || 60);
 
+      // Персонаж СМЕЩАЕТСЯ относительно центра
       const heroX = (canvas.width / 2) + (CFG.visual.heroX || 0);
       const heroY = canvas.height - (CFG.visual.heroSize || 150)/2; 
       renderEntity(CFG.visual.hero || "hero.png", heroX, heroY, CFG.visual.heroSize || 150);
@@ -494,8 +591,8 @@
       document.getElementById('ui-layer').style.display = 'none';
       document.getElementById('end-screen').style.display = 'flex';
       document.getElementById('end-title').textContent = CFG.ui.win || "КВИЗ ПРОЙДЕН!";
-      document.getElementById('end-score').textContent = "Счёт: " + this.score;
-      confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: [CFG.visual.ropeColor, '#ffffff'] });
+      document.getElementById('end-score').textContent = "ИТОГОВЫЙ СЧЁТ: " + this.score;
+      confetti({ particleCount: 250, spread: 120, origin: { y: 0.5 }, colors: [CFG.visual.ropeColor, '#f1c40f', '#00ffcc'] });
     }
   };
 
@@ -503,8 +600,16 @@
   canvas.addEventListener('mousedown', () => Game.shoot());
   canvas.addEventListener('touchstart', (e) => { e.preventDefault(); Game.shoot(); }, {passive: false});
 
-  document.getElementById('btnStart').onclick = () => Game.start();
-  document.getElementById('btnAgain').onclick = () => Game.start();
+  function playHookSoundAndStart() {
+    if (CFG.visual.hookSound) {
+        hookAudio.currentTime = 0;
+        hookAudio.play().catch(e => console.log('Audio start error:', e));
+    }
+    Game.start();
+  }
+
+  document.getElementById('btnStart').onclick = playHookSoundAndStart;
+  document.getElementById('btnAgain').onclick = playHookSoundAndStart;
 
   (async function init() {
     await loadConfig();

@@ -1,577 +1,399 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Quiz Miner</title>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>КРЮКОХВАТ — Редактор</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;700;900&family=Nunito:wght@700&family=Russo+One&family=Pacifico&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
   <style>
-    * { box-sizing: border-box; }
-    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#111; }
+    html,body{height:100%;}
+    :root{
+      --primary:#f39c12; --accent:#e74c3c; --glass:rgba(255,255,255,0.95);
+      --bg1:#2c3e50; --bg2:#1a252f; --stroke:rgba(0,0,0,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:'Montserrat',sans-serif;
+      background: radial-gradient(circle at center, var(--bg1) 0%, var(--bg2) 100%);
+      padding:24px 14px; color:#222; overflow:auto;
+    }
+    .bg-float{
+      position:fixed; font-size:46px; opacity:.15; z-index:-1;
+      animation: floatSpace 22s infinite linear; pointer-events:none;
+    }
+    @keyframes floatSpace{ 0%{transform:translateY(110vh) rotate(0deg)} 100%{transform:translateY(-10vh) rotate(360deg)} }
+
+    .wrap{
+      width:min(1280px, calc(100vw - 24px)); aspect-ratio:16 / 9;
+      max-height:min(92vh, 720px); margin:0 auto;
+      background:var(--glass); border-radius:18px;
+      box-shadow:0 0 18px var(--primary), 0 0 60px rgba(243,156,18,.18);
+      overflow:hidden; display:flex; flex-direction:column;
+    }
+
+    .top{ padding:18px 18px 10px 18px; border-bottom:1px solid rgba(0,0,0,.06); flex:none; }
+    header{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .brand{ display:flex; align-items:center; gap:12px; }
+    .logoBox{
+      width:44px; height:44px; border-radius:14px; background:rgba(243,156,18,.12);
+      border:1px solid rgba(243,156,18,.25); display:flex; align-items:center; justify-content:center;
+      font-size:26px; flex:none;
+    }
+    .brandTitle h1{ margin:0; font-family:'Fredoka One',cursive; font-size:38px; line-height:1; color:#d35400;}
+    .brandTitle .mini{ font-weight:900; color:var(--accent); font-size:12px; text-transform:uppercase; }
     
-    body.transparent-bg { background: transparent !important; }
-
-    #game-app {
-      width: 100%; height: 100%;
-      display: flex; flex-direction: column;
-      background: radial-gradient(circle at bottom, #2c3e50, #0a0a0a);
-      font-family: 'Montserrat', sans-serif;
-      user-select: none;
-      position: relative;
+    label{font-weight:800; font-size:12px; text-transform:uppercase; color:#444; display:block; margin-bottom:5px;}
+    input[type=text], input[type=color], input[type=range], textarea, select{
+      width:100%; padding:10px; border-radius:12px; border:2px solid #ddd;
+      font-family:'Montserrat',sans-serif; outline:none; transition:.15s; background:#fff;
     }
+    input[type=color] { height: 40px; cursor: pointer; padding: 2px; }
+    textarea{ min-height:80px; resize:vertical; }
+    input:focus,textarea:focus,select:focus{ border-color:var(--primary); }
+    input[type=checkbox] { width: 20px; height: 20px; cursor: pointer; }
 
-    #game-app.transparent-bg { background: transparent !important; }
-
-    .ui-layer {
-      position: absolute; top: 0; left: 0; width: 100%;
-      padding: 15px 30px; box-sizing: border-box;
-      pointer-events: none; z-index: 10;
-      color: white; text-align: center;
+    .tabbar{ display:flex; gap:6px; margin-top:10px; flex-wrap: wrap;}
+    .tab{
+      border:none; background:rgba(255,255,255,.55); border:1px solid var(--stroke);
+      padding:10px 12px; border-top-left-radius:14px; border-top-right-radius:14px;
+      font-weight:900; font-size:12px; cursor:pointer;
     }
+    .tabPanel{display:none} .tabPanel.active{display:block}
+    .tab.active{ background:#fff; border-bottom-color:transparent; }
 
-    .top-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 10px;
-    }
-
-    .progress-box {
-      width: 40%; height: 16px; background: rgba(0,0,0,0.5);
-      border-radius: 8px; border: 2px solid #fff; overflow: hidden;
-    }
-    .progress-fill { width: 0%; height: 100%; background: #00ffcc; transition: width 0.3s; box-shadow: 0 0 10px #00ffcc;}
+    .main{ flex:1; min-height:0; display:grid; grid-template-columns: 450px 1fr; gap:14px; padding:14px 18px; }
+    .left{ overflow:auto; padding-right:6px; }
+    .right{ display:flex; flex-direction:column; gap:10px; }
     
-    .score-box { 
-      font-size: 3.5vmin; font-family: 'Fredoka One', cursive; text-shadow: 2px 2px 0 rgba(0,0,0,0.5); 
-      display:flex; flex-direction: column; align-items: flex-end;
+    .toolbar{ display:flex; gap:10px; align-items:center; }
+    .btn{
+      border:none; border-radius:14px; padding:12px 14px; cursor:pointer;
+      font-weight:900; text-transform:uppercase; color:#fff;
     }
-    .combo-badge { font-size: 2.5vmin; color: #f1c40f; }
+    .btn.primary{ background:var(--primary); }
+    .btn.ghost{ background:#fff; color:#111; border:2px solid #ccc; }
+    .status{ margin-left:auto; font-weight:900; color:#333; padding:10px 12px; background:#eee; border-radius:999px;}
 
-    .question-box {
-      background: rgba(255, 255, 255, 0.95);
-      color: #111; padding: 15px 30px; border-radius: 20px;
-      font-size: 4.5vmin; font-weight: bold; display: inline-block;
-      box-shadow: 0 8px 15px rgba(0,0,0,0.3); max-width: 80%;
-      margin-top: 10px; transition: all 0.3s;
-    }
+    .previewOuter{ flex:1; background:#f0f0f0; border-radius:14px; overflow:hidden; position:relative; }
+    iframe{ width:100%; height:100%; border:none; }
 
-    canvas { display: block; width: 100%; height: 100%; }
-
-    .overlay {
-      position: absolute; inset: 0; z-index: 100; background: rgba(10, 10, 10, 0.95);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      color: white; text-align: center;
-    }
-    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 15px rgba(0,255,204,0.5); }
+    .card{ background:rgba(255,255,255,.6); border:1px solid var(--stroke); border-radius:14px; padding:14px; margin-bottom:12px; }
+    .card h2{ margin:0 0 10px; font-size:15px; border-bottom:2px solid var(--primary); padding-bottom:8px; }
     
-    /* Эпичная 3D кнопка */
-    .btn {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
-      color: #fff;
-      font-family: 'Fredoka One', cursive;
-      border: none;
-      border-radius: 50px;
-      cursor: pointer;
-      pointer-events: auto;
-      transition: all 0.15s ease-out;
-      text-shadow: 0 2px 5px rgba(0,0,0,0.8);
-      /* Сброс стандартных стилей, все переопределится в JS */
-    }
-
-    /* Анимация клика: вдавливание */
-    .btn:active {
-      transform: translateX(-50%) translateY(6px) scale(0.95) !important;
-      filter: brightness(0.8);
-    }
-
-    /* Анимации из редактора */
-    @keyframes pulse3D {
-      0% { transform: translateX(-50%) scale(1); filter: brightness(1); }
-      50% { transform: translateX(-50%) scale(1.08); filter: brightness(1.2); }
-      100% { transform: translateX(-50%) scale(1); filter: brightness(1); }
-    }
-    .anim-pulse { animation: pulse3D 1.5s ease-in-out infinite; }
-
-    @keyframes glitchEff {
-      0% { transform: translateX(-50%); }
-      10% { transform: translateX(-52%) skewX(5deg); filter: hue-rotate(90deg) brightness(1.5); }
-      20% { transform: translateX(-48%) skewX(-5deg); filter: hue-rotate(-90deg); }
-      30% { transform: translateX(-50%); filter: hue-rotate(0); }
-      100% { transform: translateX(-50%); }
-    }
-    .anim-glitch { animation: glitchEff 2.5s infinite; }
+    .qStack{ display:flex; flex-direction:column; gap:12px; }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
     
-    .floating-text {
-      position: absolute; font-family: 'Fredoka One', cursive;
-      font-size: 4vmin; color: #00ffcc; text-shadow: 0 0 10px #00ffcc;
-      pointer-events: none; z-index: 50; animation: floatUp 1s ease-out forwards;
+    .toast{
+      position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+      background:rgba(0,0,0,.85); color:#fff; padding:10px 14px; border-radius:999px;
+      font-weight:800; opacity:0; transition:.2s; pointer-events:none;
     }
-    @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.5); opacity: 0; } }
+    .toast.show{ opacity:1; }
   </style>
 </head>
 <body>
 
-<div id="game-app">
-  <div class="ui-layer" id="ui-layer" style="display:none;">
-    <div class="top-bar">
-      <div class="progress-box"><div class="progress-fill" id="progress-fill"></div></div>
-      <div class="score-box">
-        <div>Очки: <span id="score-display">0</span></div>
-        <div class="combo-badge">Комбо: x<span id="combo-display">1.0</span></div>
+  <div class="bg-float" style="left:10%;">💰</div>
+  <div class="bg-float" style="left:80%; animation-delay:-5s;">⛏️</div>
+
+  <div class="wrap">
+    <div class="top">
+      <header>
+        <div class="brand">
+          <div class="logoBox">⛏️</div>
+          <div class="brandTitle">
+            <h1>КРЮКОХВАТ</h1>
+            <div class="mini">Редактор игры</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="tabbar" id="tabs">
+        <button class="tab active" data-tab="tasks">Задания</button>
+        <button class="tab" data-tab="settings">Интерфейс</button>
+        <button class="tab" data-tab="visual">Графика</button>
+        <button class="tab" data-tab="text">Тексты и Шрифты</button>
       </div>
     </div>
-    <div class="question-box" id="question-text">Загрузка...</div>
+
+    <div class="main">
+      <div class="left">
+        
+        <div class="tabPanel active" data-panel="tasks">
+          <div class="card">
+            <h2>📝 Вопросы и Ответы</h2>
+            <p style="font-size:12px; color:#666;">Каждая строка = одно задание. В "Неверно" пиши неправильные мишени через запятую или <b>|</b>.</p>
+            <div class="qStack">
+              <div><label>Вопрос (текст сверху)</label><textarea id="q_col" placeholder="2 + 2 = ?&#10;Столица Франции?"></textarea></div>
+              <div><label>Правильный ответ</label><textarea id="c_col" placeholder="4&#10;Париж"></textarea></div>
+              <div><label>Неправильные ответы</label><textarea id="w_col" placeholder="3 | 5 | 6&#10;Лондон | Берлин | Мадрид"></textarea></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabPanel" data-panel="settings">
+          <div class="card">
+            <h2>⚙️ Тексты кнопок</h2>
+            <div class="grid2">
+              <div><label>Заголовок игры</label><input id="ui_title" type="text" value="КРЮКОХВАТ"></div>
+              <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
+                <label>Скрыть текст заголовка</label>
+                <input id="ui_hide_title" type="checkbox">
+              </div>
+              <div style="grid-column: 1 / -1">
+                <label>Титульная картинка (URL, отобразится на старте)</label>
+                <input id="ui_title_img" type="text" placeholder="title.png">
+              </div>
+              <div><label>Текст победы</label><input id="ui_win" type="text" value="КВИЗ ПРОЙДЕН!"></div>
+              <div><label>Кнопка Старт</label><input id="ui_start" type="text" value="СТАРТ"></div>
+              <div><label>Кнопка Повтор</label><input id="ui_again" type="text" value="ЕЩЁ РАЗ"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabPanel" data-panel="visual">
+          <div class="card">
+            <h2>🎨 Изображения и Звуки (Ссылки)</h2>
+            <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif). Каждая мишень с новой строки (будут браться рандомно).</p>
+            <div class="qStack">
+              <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="hero.png"></div>
+              <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="hook.png"></div>
+              <div><label>Звук крюка (URL)</label><input id="sound_hook" type="text" value="https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3"></div>
+              <div><label>Мишени (Targets)</label><textarea id="img_target" placeholder="target.png&#10;target2.png">target.png</textarea></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>✨ Стили и Размеры</h2>
+            <div class="grid2">
+              <div style="display:flex; flex-direction:column; justify-content:center; align-items:flex-start;">
+                <label>Прозрачный фон игры</label>
+                <input id="bg_transparent" type="checkbox">
+              </div>
+              <div><label>Цвет 3D-цепи</label><input id="color_rope" type="color" value="#7f8c8d"></div>
+              <div><label>Фон вопроса</label><input id="color_qbox" type="color" value="#ffffff"></div>
+              <div>
+                <label>Размер персонажа</label>
+                <input id="hero_size" type="range" min="40" max="250" value="150">
+              </div>
+              <div>
+                <label>Смещение персонажа по горизонтали (X)</label>
+                <input id="hero_x" type="range" min="-300" max="300" value="0">
+              </div>
+              <div>
+                <label>Размер мишеней</label>
+                <input id="target_size" type="range" min="40" max="200" value="90">
+              </div>
+              <div>
+                <label>Размер крюка</label>
+                <input id="hook_size" type="range" min="20" max="150" value="60">
+              </div>
+              <div>
+                <label>Позиция крюка (Y от персонажа)</label>
+                <input id="hook_y" type="range" min="-100" max="100" value="0">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabPanel" data-panel="text">
+          <div class="card">
+            <h2>🔤 Шрифты и Стили</h2>
+            <div class="qStack">
+              <div>
+                <label>Шрифт игры</label>
+                <select id="font_family">
+                  <option value="Montserrat">Montserrat (Современный)</option>
+                  <option value="Fredoka One">Fredoka One (Жирный Игровой)</option>
+                  <option value="Nunito">Nunito (Мягкий)</option>
+                  <option value="Russo One">Russo One (Квадратный)</option>
+                  <option value="Comic Neue">Comic Neue (Комикс)</option>
+                  <option value="Pacifico">Pacifico (Рукописный)</option>
+                </select>
+              </div>
+            </div>
+            
+            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст вопроса</h3>
+            <div class="grid2">
+              <div><label>Цвет текста</label><input id="q_color" type="color" value="#111111"></div>
+              <div><label>Неоновое свечение (Тень)</label><input id="q_glow" type="color" value="#000000"></div>
+              <div style="grid-column: 1 / -1">
+                <label>Размер шрифта вопроса</label>
+                <input id="q_size" type="range" min="2" max="10" step="0.5" value="4.5">
+              </div>
+            </div>
+
+            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст над мишенями</h3>
+            <div class="grid2">
+              <div><label>Цвет текста</label><input id="t_color" type="color" value="#000000"></div>
+              <div><label>Неоновое свечение (Тень)</label><input id="t_glow" type="color" value="#000000"></div>
+              <div style="grid-column: 1 / -1">
+                <label>Размер шрифта мишеней</label>
+                <input id="t_size" type="range" min="10" max="50" value="22">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="right">
+        <div class="toolbar">
+          <button class="btn ghost" id="btnPreview">Обновить превью</button>
+          <button class="btn primary" id="btnPublish">Сгенерировать игру</button>
+          <button class="btn ghost" id="btnGet">Получить код</button>
+          <div class="status" id="statusPill">Готово</div>
+        </div>
+
+        <div class="previewOuter">
+          <iframe id="preview"></iframe>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <canvas id="gameCanvas"></canvas>
-  <div id="floaty-container"></div>
-
-  <div id="start-screen" class="overlay">
-    <h1 id="uiTitle">QUIZ MINER</h1>
-    <div id="cfgNote" style="margin-top:10px; opacity:0.8;"></div>
-    <button class="btn" id="btnStart">СТАРТ</button>
-  </div>
-
-  <div id="end-screen" class="overlay" style="display:none;">
-    <h1 style="font-size: 15vmin; text-shadow:none;" id="end-emoji">🏆</h1>
-    <h1 id="end-title" style="font-family: inherit;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
-    <p style="font-size: 6vmin; font-weight: bold; color:#00ffcc;" id="end-score">Счёт: 0</p>
-    <button class="btn" id="btnAgain">ЕЩЁ РАЗ</button>
-  </div>
-</div>
+  <div class="toast" id="toast">Скопировано!</div>
 
 <script>
-  const urlParams = new URLSearchParams(location.search);
-  const cfgId = urlParams.get('id');
-  const previewMode = urlParams.get('preview') === '1';
-
-  const JSON_BASES = ["https://nikashum93.github.io/texts/data/", "https://nikashum93.github.io/data/"];
-
-  let CFG = {
-    ui: { 
-      title: "КРЮКОХВАТ", hideTitle: false, titleImg: "", 
-      start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!",
-      btnColor: "#e74c3c", btnGlow: "#c0392b", btnSize: 5, btnY: 80, btnAnim: "none"
-    },
-    visual: { 
-      bgTransparent: false,
-      hero: "hero.png", hook: "hook.png", hookSound: "https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3", targets: ["target.png"], 
-      ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
-      heroSize: 150, heroX: 0, hookSize: 60, hookOffsetY: 0, targetSize: 90,
-      fontFamily: "Montserrat", qColor: "#111111", qGlow: "#000000", qSize: 4.5,
-      tColor: "#000000", tGlow: "#000000", tSize: 22
-    },
-    gameplay: { hookSpeed: 10, swingSpeed: 0.035 }, 
-    tasks: [] 
-  };
-
-  const hookAudio = new Audio();
-
-  window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'MINER_CFG') {
-      CFG = Object.assign({}, CFG, e.data.cfg);
-      applyUI();
-      if(Game.state === 'idle') Game.reset();
+  // --- БЛОКИРОВКА ПРАВОЙ КНОПКИ МЫШИ ВНЕ ПОЛЕЙ ВВОДА ---
+  document.addEventListener('contextmenu', (e) => {
+    const t = e.target.tagName;
+    if (t !== 'INPUT' && t !== 'TEXTAREA' && t !== 'SELECT') {
+      e.preventDefault();
     }
   });
 
-  async function loadConfig() {
-    if (previewMode) return;
-    if (!cfgId) return;
-    try {
-      let res = null;
-      for (const base of JSON_BASES) {
-        try { res = await fetch(`${base}${encodeURIComponent(cfgId)}.json?v=${Date.now()}`); if (res.ok) break; } catch(e){}
-      }
-      if (res && res.ok) {
-        CFG = Object.assign({}, CFG, await res.json());
-      }
-    } catch (e) { document.getElementById('cfgNote').textContent = '⚠️ Конфиг не найден'; }
+  // --- БЛОКИРОВКА КЛАВИШИ F12 ---
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'F12' || e.keyCode === 123) {
+      e.preventDefault();
+    }
+  });
+
+  const BASE_MAIN = "https://nikashum93.github.io/hk/main.html"; 
+  const ENDPOINT = "https://server-kjnn.onrender.com/publish";
+  const PUBLISH_KEY = "nika_read_pub_2025";
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1400);
   }
 
-  function applyButtonStyle(btn) {
-    const size = CFG.ui.btnSize || 5;
-    const color = CFG.ui.btnColor || "#e74c3c";
-    const glow = CFG.ui.btnGlow || "#c0392b";
-    const yPos = CFG.ui.btnY || 80;
-
-    btn.style.fontSize = `${size}vmin`;
-    btn.style.padding = `${size * 0.4}vmin ${size * 1.5}vmin`;
-    btn.style.top = `${yPos}%`;
-
-    // Генерация 3D эффекта с бликами
-    btn.style.background = `linear-gradient(to bottom, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 40%, rgba(0,0,0,0.2) 100%), ${color}`;
-    btn.style.border = `2px solid rgba(255,255,255,0.4)`;
-    btn.style.boxShadow = `
-      inset 0 6px 0 rgba(255,255,255,0.4), 
-      inset 0 -6px 0 rgba(0,0,0,0.4), 
-      0 0 25px ${glow}, 
-      0 8px 15px rgba(0,0,0,0.6)
-    `;
-
-    btn.className = 'btn'; // Сброс классов
-    if (CFG.ui.btnAnim === 'pulse') btn.classList.add('anim-pulse');
-    if (CFG.ui.btnAnim === 'glitch') btn.classList.add('anim-glitch');
-  }
-
-  function applyUI() {
-    document.getElementById('uiTitle').textContent = CFG.ui.title || "КРЮКОХВАТ";
-    document.getElementById('uiTitle').style.display = CFG.ui.hideTitle ? 'none' : 'block';
-
-    const btnStart = document.getElementById('btnStart');
-    const btnAgain = document.getElementById('btnAgain');
-    btnStart.textContent = CFG.ui.start || "СТАРТ";
-    btnAgain.textContent = CFG.ui.again || "ЕЩЁ РАЗ";
+  function parseLines(val) { return String(val).split('\n').map(s=>s.replace(/\r/g,'')); }
+  
+  function collectConfig() {
+    const qLines = parseLines(document.getElementById('q_col').value);
+    const cLines = parseLines(document.getElementById('c_col').value);
+    const wLines = parseLines(document.getElementById('w_col').value);
     
-    applyButtonStyle(btnStart);
-    applyButtonStyle(btnAgain);
-
-    const startScreen = document.getElementById('start-screen');
-    if (CFG.ui.titleImg && CFG.ui.titleImg.trim() !== "") {
-      startScreen.style.background = `url("${CFG.ui.titleImg}") center/cover no-repeat`;
-    } else {
-      startScreen.style.background = `rgba(10, 10, 10, 0.95)`;
-    }
-
-    if (CFG.visual.bgTransparent) {
-      document.body.classList.add('transparent-bg');
-      document.getElementById('game-app').classList.add('transparent-bg');
-    } else {
-      document.body.classList.remove('transparent-bg');
-      document.getElementById('game-app').classList.remove('transparent-bg');
-    }
-
-    if (CFG.visual.hookSound) hookAudio.src = CFG.visual.hookSound;
-
-    const qb = document.getElementById('question-text');
-    qb.style.background = CFG.visual.qBoxColor;
-    qb.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
-    qb.style.color = CFG.visual.qColor || "#111111";
-    qb.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
-    qb.style.textShadow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? `0 0 10px ${CFG.visual.qGlow}` : 'none';
-
-    document.getElementById('game-app').style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
-  }
-
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
-  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  window.addEventListener('resize', resize);
-  resize();
-
-  const imgCache = {};
-  function renderEntity(val, x, y, size) {
-    if (!val) return false;
-    if (val.startsWith('http') || val.endsWith('.png') || val.endsWith('.jpg') || val.endsWith('.gif') || val.startsWith('data:image')) {
-      if (!imgCache[val]) {
-        const img = new Image(); 
-        img.crossOrigin = "Anonymous";
-        img.src = val; 
-        imgCache[val] = img;
-      }
-      if (imgCache[val].complete && imgCache[val].naturalWidth > 0) {
-        ctx.drawImage(imgCache[val], x - size/2, y - size/2, size, size);
-        return true; 
-      }
-    } else {
-      ctx.font = `${size}px "${CFG.visual.fontFamily}", sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(val, x, y);
-      return false; 
-    }
-  }
-
-  function drawChain(x1, y1, x2, y2, color) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const angle = Math.atan2(dy, dx);
-    const linkLength = 18; 
-    const numLinks = Math.max(1, Math.floor(dist / linkLength));
-
-    ctx.save();
-    ctx.translate(x1, y1);
-    ctx.rotate(angle);
-
-    for (let i = 0; i < numLinks; i++) {
-      ctx.beginPath();
-      ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = '#222';
-      ctx.lineWidth = 5;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.ellipse(i * linkLength + linkLength/2, 0, linkLength/2, 5, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.ellipse(i * linkLength + linkLength/2 - 1, -1, linkLength/2 - 2, 2, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255,255,255,0.7)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  const Game = {
-    state: 'idle',
-    hookState: 'swinging',
-    score: 0,
-    combo: 1.0,
-    currentTaskIndex: 0,
-    targets: [],
-    hook: { x: 0, y: 0, angle: 0, length: 80, maxLength: 1000, time: 0, caughtTarget: null },
-
-    reset() {
-      this.score = 0; this.combo = 1.0; this.currentTaskIndex = 0;
-      this.state = 'idle'; this.hookState = 'swinging'; this.hook.length = 80; this.targets = [];
-      document.getElementById('start-screen').style.display = 'flex';
-      document.getElementById('ui-layer').style.display = 'none';
-      document.getElementById('end-screen').style.display = 'none';
-      this.draw();
-    },
-
-    start() {
-      if(!CFG.tasks || CFG.tasks.length === 0) return alert("Нет заданий!");
-      this.score = 0; this.combo = 1.0; this.currentTaskIndex = 0;
-      this.state = 'playing';
-      document.getElementById('start-screen').style.display = 'none';
-      document.getElementById('ui-layer').style.display = 'block';
-      this.loadTask();
-      this.loop();
-    },
-
-    spawnFloaty(text, x, y, color) {
-      const fc = document.getElementById('floaty-container');
-      const el = document.createElement('div');
-      el.className = 'floating-text'; el.textContent = text;
-      el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color; el.style.textShadow = `0 0 10px ${color}`;
-      fc.appendChild(el);
-      setTimeout(() => el.remove(), 1000);
-    },
-
-    loadTask() {
-      if (this.currentTaskIndex >= CFG.tasks.length) return this.gameOver();
+    const tasks = [];
+    const n = Math.max(qLines.length, cLines.length, wLines.length);
+    for(let i=0; i<n; i++) {
+      const q = (qLines[i]||'').trim();
+      const c = (cLines[i]||'').trim();
+      const w = (wLines[i]||'').trim();
+      if(!q && !c && !w) continue;
       
-      const task = CFG.tasks[this.currentTaskIndex];
-      document.getElementById('question-text').textContent = task.q;
-      const pct = (this.currentTaskIndex / CFG.tasks.length) * 100;
-      document.getElementById('progress-fill').style.width = `${pct}%`;
-      document.getElementById('score-display').textContent = this.score;
-      document.getElementById('combo-display').textContent = this.combo.toFixed(1);
+      tasks.push({
+        q: q || '...',
+        correct: (c ? c.split('|') : ['Да']).map(s=>s.trim()),
+        wrong: (w ? w.split(/\||,/) : ['Нет']).map(s=>s.trim())
+      });
+    }
 
-      this.targets = [];
-      let allAnswers = [ { text: task.correct[0] || "Да", isCorrect: true } ];
-      (task.wrong || []).forEach(w => { if(w.trim()) allAnswers.push({ text: w.trim(), isCorrect: false }); });
-      allAnswers.sort(() => Math.random() - 0.5);
+    return {
+      ui: {
+        title: document.getElementById('ui_title').value || "КРЮКОХВАТ",
+        hideTitle: document.getElementById('ui_hide_title').checked,
+        titleImg: document.getElementById('ui_title_img').value || "",
+        win: document.getElementById('ui_win').value || "КВИЗ ПРОЙДЕН!",
+        start: document.getElementById('ui_start').value || "СТАРТ",
+        again: document.getElementById('ui_again').value || "ЕЩЁ РАЗ"
+      },
+      visual: {
+        bgTransparent: document.getElementById('bg_transparent').checked,
+        hero: document.getElementById('img_hero').value || "hero.png",
+        hook: document.getElementById('img_hook').value || "hook.png",
+        hookSound: document.getElementById('sound_hook').value || "",
+        targets: parseLines(document.getElementById('img_target').value).filter(x=>x),
+        targetSize: parseInt(document.getElementById('target_size').value) || 90,
+        ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
+        qBoxColor: document.getElementById('color_qbox').value || "#ffffff",
+        heroSize: parseInt(document.getElementById('hero_size').value) || 150,
+        heroX: parseInt(document.getElementById('hero_x').value) || 0,
+        hookSize: parseInt(document.getElementById('hook_size').value) || 60,
+        hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0,
+        fontFamily: document.getElementById('font_family').value || 'Montserrat',
+        qColor: document.getElementById('q_color').value || '#111111',
+        qGlow: document.getElementById('q_glow').value || '#000000',
+        qSize: parseFloat(document.getElementById('q_size').value) || 4.5,
+        tColor: document.getElementById('t_color').value || '#000000',
+        tGlow: document.getElementById('t_glow').value || '#000000',
+        tSize: parseInt(document.getElementById('t_size').value) || 22
+      },
+      gameplay: { hookSpeed: 10, swingSpeed: 0.035 }, 
+      tasks: tasks
+    };
+  }
 
-      const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : ["target.png"];
-      assetsList.sort(() => Math.random() - 0.5); 
+  function makeId() { return `miner-${Date.now()}`; }
 
-      const targetW = CFG.visual.targetSize || 90;
-      const rowCapacity = Math.max(2, Math.ceil(allAnswers.length / 2)); 
-      const zoneWidth = canvas.width / rowCapacity; 
+  function refreshPreview() {
+    const cfg = collectConfig();
+    const pr = document.getElementById('preview');
+    pr.src = BASE_MAIN + "?preview=1";
+    pr.onload = () => {
+      pr.contentWindow.postMessage({ type: 'MINER_CFG', cfg }, '*');
+    };
+  }
 
-      allAnswers.forEach((ans, i) => {
-        const row = i % 2; 
-        const col = Math.floor(i / 2); 
-        const minX = col * zoneWidth + targetW/2 + 20;
-        const maxX = (col + 1) * zoneWidth - targetW/2 - 20;
-        
-        this.targets.push({
-          text: ans.text, 
-          isCorrect: ans.isCorrect,
-          asset: assetsList[i % assetsList.length], 
-          minX: minX, maxX: maxX,
-          x: minX + Math.random() * (maxX - minX),
-          y: canvas.height * 0.25 + (row * 120),
-          w: targetW, h: targetW,
-          speed: (Math.random() * 1.5 + 1.0) * (Math.random() > 0.5 ? 1 : -1) 
-        });
+  let lastIframe = "";
+  async function publish() {
+    const cfg = collectConfig();
+    if(cfg.tasks.length === 0) return alert("Добавь хотя бы одно задание!");
+
+    document.getElementById('statusPill').textContent = 'Создаю…';
+    const id = makeId();
+    
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Publish-Key": PUBLISH_KEY },
+        body: JSON.stringify({ id, mode: "json", folder: "data", content: JSON.stringify(cfg, null, 2) })
       });
 
-      this.hookState = 'swinging'; this.hook.length = 80;
-    },
+      if(!res.ok) throw new Error("Server error");
 
-    shoot() {
-      if (this.state === 'playing' && this.hookState === 'swinging') {
-        this.hookState = 'shooting';
-        this.hook.maxLength = canvas.height * 1.2;
-        
-        if (CFG.visual.hookSound) {
-            hookAudio.currentTime = 0;
-            hookAudio.play().catch(e => console.log('Audio error:', e));
-        }
-      }
-    },
-
-    update() {
-      if (this.state !== 'playing') return;
-
-      const speed = CFG.gameplay.hookSpeed || 10;
-      const swingSpeed = CFG.gameplay.swingSpeed || 0.035;
-      
-      // Крюк теперь СТРОГО ПО ЦЕНТРУ
-      this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
-
-      this.targets.forEach(t => {
-        t.x += t.speed;
-        if (t.x > t.maxX) { t.x = t.maxX; t.speed *= -1; }
-        if (t.x < t.minX) { t.x = t.minX; t.speed *= -1; }
-      });
-
-      if (this.hookState === 'swinging') {
-        this.hook.time += swingSpeed;
-        this.hook.angle = Math.sin(this.hook.time) * (Math.PI / 2.2);
-      } 
-      else if (this.hookState === 'shooting') {
-        this.hook.length += speed;
-        const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
-        const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
-
-        for (let i = 0; i < this.targets.length; i++) {
-          let t = this.targets[i];
-          if (Math.abs(hx - t.x) < t.w/2 && Math.abs(hy - t.y) < t.h/2) {
-            this.hookState = 'retracting';
-            this.hook.caughtTarget = t; 
-            this.targets.splice(i, 1); 
-            break;
-          }
-        }
-        if (this.hook.length > this.hook.maxLength) {
-           this.hookState = 'retracting';
-           this.combo = 1.0; 
-           document.getElementById('combo-display').textContent = this.combo.toFixed(1);
-        }
-      } 
-      else if (this.hookState === 'retracting') {
-        this.hook.length -= speed * 1.5; 
-        
-        if (this.hook.caughtTarget) {
-          this.hook.caughtTarget.x = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
-          this.hook.caughtTarget.y = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
-        }
-
-        if (this.hook.length <= 80) {
-          this.hookState = 'swinging'; 
-          this.hook.length = 80;
-          
-          if (this.hook.caughtTarget) {
-            let caught = this.hook.caughtTarget;
-            this.hook.caughtTarget = null;
-            
-            if (caught.isCorrect) {
-              let pts = Math.floor(100 * this.combo);
-              this.score += pts;
-              this.spawnFloaty(`+${pts} (x${this.combo.toFixed(1)})`, this.hook.x, this.hook.y - 120, '#00ffcc');
-              this.combo = Math.min(this.combo + 0.5, 5.0);
-              
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.9 }, colors: [CFG.visual.ropeColor, '#ffffff'] });
-              this.currentTaskIndex++;
-              setTimeout(() => this.loadTask(), 800);
-            } else {
-              this.combo = 1.0;
-              document.getElementById('combo-display').textContent = this.combo.toFixed(1);
-              this.spawnFloaty("Промах!", this.hook.x, this.hook.y - 120, '#e74c3c');
-              document.getElementById('question-text').textContent = "Ой! Не та мишень!";
-              
-              caught.y = canvas.height * 0.25; 
-              this.targets.push(caught);
-              setTimeout(() => this.loadTask(), 1200);
-            }
-          }
-        }
-      }
-    },
-
-    drawTargetEl(t) {
-        renderEntity(t.asset, t.x, t.y, CFG.visual.targetSize || 90);
-
-        ctx.font = `bold ${CFG.visual.tSize || 22}px "${CFG.visual.fontFamily}", sans-serif`;
-        const textMet = ctx.measureText(t.text);
-        const tw = textMet.width + 24;
-        const th = (CFG.visual.tSize || 22) + 14;
-        const textY = t.y - (CFG.visual.targetSize || 90)/2 - th/2 - 8;
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 10); ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.lineWidth = 2; ctx.stroke();
-
-        if (CFG.visual.tGlow && CFG.visual.tGlow !== "#000000") {
-          ctx.shadowColor = CFG.visual.tGlow;
-          ctx.shadowBlur = 8;
-        }
-        ctx.fillStyle = CFG.visual.tColor || '#000000';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(t.text, t.x, textY);
-        ctx.shadowBlur = 0; 
-    },
-
-    draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      this.targets.forEach(t => this.drawTargetEl(t));
-      if (this.hook.caughtTarget) this.drawTargetEl(this.hook.caughtTarget);
-
-      // Крюк по центру
-      this.hook.x = canvas.width / 2;
-      this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
-      const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
-      const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
-
-      drawChain(this.hook.x, this.hook.y, hx, hy, CFG.visual.ropeColor || "#bdc3c7");
-
-      renderEntity(CFG.visual.hook || "hook.png", hx, hy, CFG.visual.hookSize || 60);
-
-      // Персонаж смещается
-      const heroX = (canvas.width / 2) + (CFG.visual.heroX || 0);
-      const heroY = canvas.height - (CFG.visual.heroSize || 150)/2; 
-      renderEntity(CFG.visual.hero || "hero.png", heroX, heroY, CFG.visual.heroSize || 150);
-    },
-
-    loop() {
-      if (this.state !== 'playing') return;
-      this.update(); this.draw();
-      requestAnimationFrame(() => this.loop());
-    },
-
-    gameOver() {
-      this.state = 'gameover';
-      document.getElementById('ui-layer').style.display = 'none';
-      document.getElementById('end-screen').style.display = 'flex';
-      document.getElementById('end-title').textContent = CFG.ui.win || "КВИЗ ПРОЙДЕН!";
-      document.getElementById('end-score').textContent = "Счёт: " + this.score;
-      confetti({ particleCount: 200, spread: 100, origin: { y: 0.5 }, colors: [CFG.visual.ropeColor, '#ffffff'] });
+      lastIframe = `<iframe src="${BASE_MAIN}?id=${id}" width="100%" height="650" style="border:0;" allow="fullscreen; autoplay"></iframe>`;
+      document.getElementById('statusPill').textContent = 'Готово ✅';
+      toast('Игра создана ✅');
+    } catch(e) {
+      document.getElementById('statusPill').textContent = 'Ошибка';
+      alert('Ошибка публикации: ' + e.message);
     }
+  }
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tabPanel').forEach(p => p.classList.remove('active'));
+      t.classList.add('active');
+      document.querySelector(`.tabPanel[data-panel="${t.dataset.tab}"]`).classList.add('active');
+    };
+  });
+
+  document.getElementById('btnPreview').onclick = refreshPreview;
+  document.getElementById('btnPublish').onclick = publish;
+  document.getElementById('btnGet').onclick = () => {
+    if(!lastIframe) return toast("Сначала сгенерируй игру!");
+    navigator.clipboard.writeText(lastIframe).then(()=>toast("Скопировано!"));
   };
 
-  window.addEventListener('keydown', (e) => { if (e.code === 'Space') Game.shoot(); });
-  canvas.addEventListener('mousedown', () => Game.shoot());
-  canvas.addEventListener('touchstart', (e) => { e.preventDefault(); Game.shoot(); }, {passive: false});
+  document.addEventListener('input', (e) => {
+    if(e.target.closest('.wrap')) setTimeout(refreshPreview, 300);
+  });
 
-  function playHookSoundAndStart() {
-    if (CFG.visual.hookSound) {
-        hookAudio.currentTime = 0;
-        hookAudio.play().catch(e => console.log('Audio start error:', e));
-    }
-    Game.start();
-  }
-
-  document.getElementById('btnStart').onclick = playHookSoundAndStart;
-  document.getElementById('btnAgain').onclick = playHookSoundAndStart;
-
-  (async function init() {
-    await loadConfig();
-    applyUI();
-    Game.reset();
-  })();
 </script>
 </body>
 </html>

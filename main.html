@@ -10,9 +10,7 @@
 
   <style>
     :root {
-      --btn-color: #e74c3c;
-      --btn-glow: #c0392b;
-      --theme-glow: #00ffcc; /* Основной цвет неоновой обводки */
+      --theme-glow: #00ffcc; /* Динамический цвет подсветки */
     }
     
     * { box-sizing: border-box; }
@@ -45,25 +43,24 @@
 
     .hud-center {
       flex: 1; display: flex; flex-direction: column; align-items: center; gap: 15px;
-      margin-top: 5px;
     }
 
     .hud-right {
       position: absolute; right: 20px; top: 20px;
-      display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+      display: flex; flex-direction: column; align-items: flex-end;
     }
 
     /* === БЕГАЮЩИЙ НЕОН (ОБЕРТКА) === */
     .glowing-wrap {
       position: relative;
-      padding: 3px; /* Толщина неоновой рамки */
-      border-radius: 24px;
+      padding: 2px; /* ТОНКАЯ РАМКА */
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .glowing-wrap::before {
       content: ""; position: absolute; top: -100%; left: -100%; width: 300%; height: 300%;
-      background: conic-gradient(transparent, transparent, var(--theme-glow), transparent 30%);
+      background: conic-gradient(transparent, transparent, var(--theme-glow), transparent 25%);
       animation: spinGlow 3s linear infinite;
       z-index: 0;
     }
@@ -71,40 +68,40 @@
       position: relative;
       background: rgba(15, 20, 25, 0.95);
       backdrop-filter: blur(10px);
-      border-radius: 21px; /* Чуть меньше обертки */
+      border-radius: 18px; /* wrap radius - padding */
       z-index: 1;
       display: flex; align-items: center; justify-content: center;
     }
     @keyframes spinGlow { 100% { transform: rotate(360deg); } }
 
+    /* === ПРОГРЕСС-БАР === */
+    .p-wrap { width: 100%; max-width: 400px; border-radius: 10px; margin-bottom: 5px; }
+    .p-inner { padding: 4px; border-radius: 8px; width: 100%; display: flex; justify-content: flex-start; }
+    .progress-fill { 
+      width: 0%; height: 8px; 
+      background: var(--theme-glow);
+      border-radius: 4px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+      box-shadow: 0 0 12px var(--theme-glow);
+    }
+
     /* === ВОПРОС === */
     .q-inner {
       padding: 15px 40px;
-      font-size: 4.5vmin; font-weight: 900; text-align: center; color: #fff;
+      font-weight: 900; text-align: center; color: #fff;
       text-transform: uppercase; letter-spacing: 1px;
       min-width: 250px; max-width: 90vw;
     }
-
-    /* === ПРОГРЕСС-БАР === */
-    .p-wrap { width: 100%; max-width: 400px; border-radius: 12px; }
-    .p-inner { padding: 4px; border-radius: 9px; width: 100%; display: flex; justify-content: flex-start; }
-    .progress-fill { 
-      width: 0%; height: 10px; 
-      background: var(--theme-glow);
-      border-radius: 5px;
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-      box-shadow: 0 0 15px var(--theme-glow);
-    }
     
     /* === ОЧКИ И КОМБО === */
-    .s-wrap { border-radius: 20px; }
-    .s-inner { padding: 12px 24px; flex-direction: column; gap: 4px; border-radius: 17px; }
+    .s-wrap { border-radius: 16px; }
+    .s-inner { padding: 12px 24px; flex-direction: column; gap: 4px; border-radius: 14px; }
     .score-val { 
       font-family: 'Fredoka One', cursive; font-size: 5vmin; 
       color: var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow); line-height: 1; 
     }
     .combo-badge { 
-      font-size: 2vmin; font-weight: 900; color: #fff; opacity: 0.9;
+      font-size: 2.2vmin; font-weight: 900; color: #fff; opacity: 0.9; text-shadow: 0 2px 4px #000;
     }
 
     canvas { display: block; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1;}
@@ -114,40 +111,28 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       color: white; text-align: center;
     }
-    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 20px var(--theme-glow); }
+    h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 20px var(--theme-glow); color: #fff; margin-bottom: 20px;}
     
-    /* === 3D КНОПКА === */
+    /* === КНОПКА СТАРТ (В СТИЛЕ HUD) === */
+    .btn-wrap {
+      border-radius: 50px;
+      cursor: pointer;
+      pointer-events: auto;
+      margin-top: 30px;
+      transition: transform 0.1s;
+    }
+    .btn-wrap:active { transform: scale(0.92); filter: brightness(0.8); }
     .btn {
-      position: absolute; left: 50%; transform: translateX(-50%);
-      color: #fff; font-family: 'Fredoka One', cursive;
-      border-radius: 50px; cursor: pointer; pointer-events: auto;
-      transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-      text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      background: linear-gradient(180deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.2) 100%), var(--btn-color);
-      border: 2px solid rgba(255,255,255,0.4);
-      box-shadow: inset 0 6px 0 rgba(255,255,255,0.3), inset 0 -6px 0 rgba(0,0,0,0.3), 0 0 25px var(--btn-glow), 0 10px 20px rgba(0,0,0,0.7);
+      padding: 15px 50px;
+      border-radius: 48px;
+      color: #fff;
+      text-transform: uppercase;
+      background: rgba(15, 20, 25, 0.95);
+      border: none;
+      outline: none;
+      pointer-events: none; /* Клики ловит обертка */
+      text-shadow: 0 0 10px var(--theme-glow);
     }
-    .btn:active { 
-      transform: translateX(-50%) translateY(8px) scale(0.95) !important; 
-      box-shadow: inset 0 2px 0 rgba(255,255,255,0.3), inset 0 -2px 0 rgba(0,0,0,0.3), 0 0 15px var(--btn-glow), 0 2px 5px rgba(0,0,0,0.7);
-      filter: brightness(0.9);
-    }
-    
-    @keyframes pulse3D {
-      0% { transform: translateX(-50%) scale(1); filter: brightness(1); }
-      50% { transform: translateX(-50%) scale(1.05); filter: brightness(1.2); box-shadow: inset 0 6px 0 rgba(255,255,255,0.4), inset 0 -6px 0 rgba(0,0,0,0.3), 0 0 40px var(--btn-glow), 0 15px 25px rgba(0,0,0,0.8); }
-      100% { transform: translateX(-50%) scale(1); filter: brightness(1); }
-    }
-    .anim-pulse { animation: pulse3D 2s ease-in-out infinite; }
-
-    @keyframes glitchEff {
-      0% { transform: translateX(-50%); }
-      10% { transform: translateX(-52%) skewX(5deg); filter: hue-rotate(90deg) brightness(1.5); }
-      20% { transform: translateX(-48%) skewX(-5deg); filter: hue-rotate(-90deg); }
-      30% { transform: translateX(-50%); filter: hue-rotate(0); }
-      100% { transform: translateX(-50%); }
-    }
-    .anim-glitch { animation: glitchEff 3s infinite; }
     
     .floating-text {
       position: absolute; font-family: 'Fredoka One', cursive;
@@ -166,13 +151,13 @@
   <div class="ui-layer" id="ui-layer" style="display:none;">
     <div class="hud-header">
       <div class="hud-center">
-        <div class="glowing-wrap">
-          <div class="glowing-inner q-inner" id="question-text">Загрузка...</div>
-        </div>
         <div class="glowing-wrap p-wrap">
           <div class="glowing-inner p-inner">
             <div class="progress-fill" id="progress-fill"></div>
           </div>
+        </div>
+        <div class="glowing-wrap">
+          <div class="glowing-inner q-inner" id="question-text">Загрузка...</div>
         </div>
       </div>
     </div>
@@ -180,7 +165,7 @@
       <div class="glowing-wrap s-wrap">
         <div class="glowing-inner s-inner">
           <div class="score-val" id="score-display">0</div>
-          <div class="combo-badge">🔥 КОМБО: x<span id="combo-display">1.0</span></div>
+          <div class="combo-badge">🔥 <span id="combo-display">x1.0</span></div>
         </div>
       </div>
     </div>
@@ -189,14 +174,20 @@
   <div id="start-screen" class="overlay">
     <h1 id="uiTitle">QUIZ MINER</h1>
     <div id="cfgNote" style="margin-top:10px; opacity:0.8;"></div>
-    <button class="btn" id="btnStart">СТАРТ</button>
+    
+    <div class="glowing-wrap btn-wrap" id="btnStartWrap">
+      <div class="glowing-inner btn" id="btnStart">СТАРТ</div>
+    </div>
   </div>
 
   <div id="end-screen" class="overlay" style="display:none;">
     <h1 style="font-size: 15vmin; text-shadow:none;" id="end-emoji">🏆</h1>
     <h1 id="end-title" style="font-family: inherit;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
-    <p style="font-size: 6vmin; font-weight: bold; color:var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow);" id="end-score">0</p>
-    <button class="btn" id="btnAgain">ЕЩЁ РАЗ</button>
+    <p style="font-size: 6vmin; font-weight: bold; color:var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow); margin: 10px 0;" id="end-score">0</p>
+    
+    <div class="glowing-wrap btn-wrap" id="btnAgainWrap">
+      <div class="glowing-inner btn" id="btnAgain">ЕЩЁ РАЗ</div>
+    </div>
   </div>
 </div>
 
@@ -210,16 +201,15 @@
   let CFG = {
     ui: { 
       title: "КРЮКОХВАТ", hideTitle: false, titleImg: "", 
-      start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!",
-      btnColor: "#e74c3c", btnGlow: "#c0392b", btnSize: 5, btnY: 80, btnAnim: "none"
+      start: "СТАРТ", again: "ЕЩЁ РАЗ", win: "КВИЗ ПРОЙДЕН!"
     },
     visual: { 
       bgTransparent: false,
       hero: "hero.png", hook: "hook.png", hookSound: "", targets: ["target.png"], 
       ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
       heroSize: 150, heroX: 0, hookSize: 60, hookOffsetY: 0, targetSize: 90,
-      fontFamily: "Montserrat", qColor: "#ffffff", qGlow: "#000000", qSize: 4.5,
-      tColor: "#ffffff", tGlow: "#000000", tSize: 22
+      fontFamily: "Montserrat", qColor: "#ffffff", qGlow: "#00ffcc", qSize: 4.5,
+      tColor: "#ffffff", tGlow: "#00ffcc", tSize: 22
     },
     gameplay: { hookSpeed: 10, swingSpeed: 0.035 }, 
     tasks: [] 
@@ -249,20 +239,6 @@
     } catch (e) { document.getElementById('cfgNote').textContent = '⚠️ Конфиг не найден'; }
   }
 
-  function applyButtonStyle(btn) {
-    const size = CFG.ui.btnSize || 5;
-    document.documentElement.style.setProperty('--btn-color', CFG.ui.btnColor || "#e74c3c");
-    document.documentElement.style.setProperty('--btn-glow', CFG.ui.btnGlow || "#c0392b");
-
-    btn.style.fontSize = `${size}vmin`;
-    btn.style.padding = `${size * 0.5}vmin ${size * 2}vmin`;
-    btn.style.top = `${CFG.ui.btnY || 80}%`;
-
-    btn.className = 'btn'; 
-    if (CFG.ui.btnAnim === 'pulse') btn.classList.add('anim-pulse');
-    if (CFG.ui.btnAnim === 'glitch') btn.classList.add('anim-glitch');
-  }
-
   function applyUI() {
     document.getElementById('uiTitle').textContent = CFG.ui.title || "КРЮКОХВАТ";
     document.getElementById('uiTitle').style.display = CFG.ui.hideTitle ? 'none' : 'block';
@@ -271,9 +247,6 @@
     const btnAgain = document.getElementById('btnAgain');
     btnStart.textContent = CFG.ui.start || "СТАРТ";
     btnAgain.textContent = CFG.ui.again || "ЕЩЁ РАЗ";
-    
-    applyButtonStyle(btnStart);
-    applyButtonStyle(btnAgain);
 
     const startScreen = document.getElementById('start-screen');
     if (CFG.ui.titleImg && CFG.ui.titleImg.trim() !== "") {
@@ -292,16 +265,20 @@
 
     if (CFG.visual.hookSound) hookAudio.src = CFG.visual.hookSound;
 
-    // Цвет неоновой бегающей рамки (если не задан, будет бирюзовый)
+    // Установка основного цвета неона (для рамок, очков и прогресса)
     let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "#00ffcc";
     document.documentElement.style.setProperty('--theme-glow', themeGlow);
 
+    // Применяем выбранный шрифт ко всему интерфейсу и кнопкам
+    const font = `"${CFG.visual.fontFamily}", sans-serif`;
+    document.getElementById('game-app').style.fontFamily = font;
+    btnStart.style.fontFamily = font;
+    btnAgain.style.fontFamily = font;
+    document.getElementById('uiTitle').style.fontFamily = font;
+
     const qbInner = document.querySelector('.q-inner');
-    qbInner.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
     qbInner.style.color = CFG.visual.qColor || "#ffffff";
     qbInner.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
-
-    document.getElementById('game-app').style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
   }
 
   const canvas = document.getElementById('gameCanvas');
@@ -406,7 +383,7 @@
       const pct = (this.currentTaskIndex / CFG.tasks.length) * 100;
       document.getElementById('progress-fill').style.width = `${pct}%`;
       document.getElementById('score-display').textContent = this.score;
-      document.getElementById('combo-display').textContent = this.combo.toFixed(1);
+      document.getElementById('combo-display').textContent = `x${this.combo.toFixed(1)}`;
 
       this.targets = [];
       let allAnswers = [ { text: task.correct[0] || "Да", isCorrect: true } ];
@@ -416,22 +393,21 @@
       const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : [""];
       
       const targetW = CFG.visual.targetSize || 90;
+      const maxCols = 2; // СТРОГО до 2-х колонок для идеальной симметрии
       
-      // ИДЕАЛЬНАЯ СЕТКА: 2 колонки максимум
-      const maxCols = 2; 
-      const rows = [];
-      for(let i=0; i<allAnswers.length; i+=maxCols) {
-          rows.push(allAnswers.slice(i, i+maxCols));
-      }
-      
-      // Стартуем СТРОГО ниже плашки вопроса (25% высоты или 180px)
-      const startY = Math.max(180, canvas.height * 0.25);
+      // Расчет высоты так, чтобы мишени ВСЕГДА были ниже вопроса (примерно 25-30% экрана сверху)
+      const startY = Math.max(canvas.height * 0.28, 200); 
       const rowHeight = targetW + 80; 
       
       let answerIndex = 0;
-      rows.forEach((rowItems, r) => {
-          const zoneWidth = canvas.width / rowItems.length;
-          rowItems.forEach((ans, c) => {
+      let totalRows = Math.ceil(allAnswers.length / maxCols);
+
+      for (let r = 0; r < totalRows; r++) {
+          let itemsInRow = Math.min(maxCols, allAnswers.length - answerIndex);
+          let zoneWidth = canvas.width / itemsInRow;
+
+          for (let c = 0; c < itemsInRow; c++) {
+              let ans = allAnswers[answerIndex];
               const minX = c * zoneWidth + targetW/2 + 20;
               const maxX = (c + 1) * zoneWidth - targetW/2 - 20;
               
@@ -444,12 +420,12 @@
                  x: minX + Math.random() * Math.max(0, maxX - minX),
                  y: startY + (r * rowHeight),
                  w: targetW, h: targetW,
-                 hitX: 0, hitY: 0, hitW: 0, hitH: 0, // Вычисляются в draw
-                 speed: (Math.random() * 1.5 + 1.0) * (c % 2 === 0 ? 1 : -1)
+                 hitX: 0, hitY: 0, hitW: 0, hitH: 0,
+                 speed: (Math.random() * 1.5 + 1.0) * (c % 2 === 0 ? 1 : -1) // Движение только по X
               });
               answerIndex++;
-          });
-      });
+          }
+      }
 
       this.hookState = 'swinging'; this.hook.length = 80;
     },
@@ -476,7 +452,7 @@
       this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
 
       this.targets.forEach(t => {
-        // Движение ТОЛЬКО по горизонтали
+        // Идеально ровное движение по горизонтали
         t.x += t.speed;
         if (t.x > t.maxX) { t.x = t.maxX; t.speed *= -1; }
         if (t.x < t.minX) { t.x = t.minX; t.speed *= -1; }
@@ -493,7 +469,6 @@
 
         for (let i = 0; i < this.targets.length; i++) {
           let t = this.targets[i];
-          // Идеальная проверка столкновений по реальной коробке (картинке ИЛИ тексту)
           if (Math.abs(hx - t.hitX) < t.hitW/2 && Math.abs(hy - t.hitY) < t.hitH/2) {
             this.hookState = 'retracting';
             this.hook.caughtTarget = t; 
@@ -504,7 +479,7 @@
         if (this.hook.length > this.hook.maxLength) {
            this.hookState = 'retracting';
            this.combo = 1.0; 
-           document.getElementById('combo-display').textContent = this.combo.toFixed(1);
+           document.getElementById('combo-display').textContent = `x${this.combo.toFixed(1)}`;
         }
       } 
       else if (this.hookState === 'retracting') {
@@ -531,14 +506,14 @@
               
               this.combo = Math.min(this.combo + 0.5, 5.0);
               
-              confetti({ particleCount: 100, spread: 70, origin: { y: 0.9 }, colors: [CFG.visual.ropeColor, '#f1c40f', '#00ffcc'] });
+              let tGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : '#00ffcc';
+              confetti({ particleCount: 100, spread: 70, origin: { y: 0.9 }, colors: [CFG.visual.ropeColor, '#f1c40f', tGlow] });
               this.currentTaskIndex++;
               setTimeout(() => this.loadTask(), 800);
             } else {
               this.combo = 1.0;
-              document.getElementById('combo-display').textContent = this.combo.toFixed(1);
+              document.getElementById('combo-display').textContent = `x${this.combo.toFixed(1)}`;
               this.spawnFloaty("ПРОМАХ!", this.hook.x, this.hook.y - 120, '#e74c3c', '#c0392b');
-              document.getElementById('question-text').textContent = "Не то!";
               
               this.targets.push(caught);
               setTimeout(() => this.loadTask(), 1200);
@@ -560,27 +535,25 @@
         let textY;
 
         if (hasImg) {
-          // Если есть картинка: рисуем ее, а текст НАД ней
+          // Если ЕСТЬ картинка: Рисуем её, а текст СТРОГО НАД НЕЙ
           renderEntity(t.asset, t.x, t.y, t.w);
-          textY = t.y - t.h/2 - th/2 - 5;
+          textY = t.y - t.h/2 - th/2 - 10;
           
-          // Хитбокс - это сама картинка
           t.hitX = t.x; t.hitY = t.y; t.hitW = t.w; t.hitH = t.h;
         } else {
-          // Если картинки НЕТ: текст центрируется
+          // Если НЕТ картинки: Центрируем текст по координате Y (он и есть мишень)
           textY = t.y;
           
-          // Хитбокс - это плашка текста
           t.hitX = t.x; t.hitY = textY; t.hitW = tw; t.hitH = th;
         }
 
-        // Рисуем стеклянную плашку ответа
+        // Рисуем стеклянную плашку для текста ответа
         ctx.fillStyle = 'rgba(15, 20, 25, 0.9)';
         ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 15); ctx.fill();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2; ctx.stroke();
         
-        // Цветная обводка плашки
-        let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "rgba(0, 255, 204, 0.5)";
+        // Тонкая цветная обводка ответа
+        let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "#00ffcc";
         ctx.strokeStyle = themeGlow; ctx.lineWidth = 1; ctx.stroke(); 
 
         ctx.fillStyle = CFG.visual.tColor || '#ffffff';
@@ -635,8 +608,8 @@
     Game.start();
   }
 
-  document.getElementById('btnStart').onclick = playHookSoundAndStart;
-  document.getElementById('btnAgain').onclick = playHookSoundAndStart;
+  document.getElementById('btnStartWrap').onclick = playHookSoundAndStart;
+  document.getElementById('btnAgainWrap').onclick = playHookSoundAndStart;
 
   (async function init() {
     await loadConfig();

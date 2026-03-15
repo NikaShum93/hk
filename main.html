@@ -16,9 +16,10 @@
     }
     
     * { box-sizing: border-box; }
-    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#111; }
     
-    body.transparent-bg { background: transparent !important; }
+    /* Делаем так, чтобы HTML тоже становился прозрачным! */
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#111; }
+    html.transparent-bg, body.transparent-bg { background: transparent !important; }
 
     #game-app {
       width: 100%; height: 100%;
@@ -257,10 +258,13 @@
       startScreen.style.background = `rgba(10, 10, 10, 0.95)`;
     }
 
+    // Применяем прозрачность в том числе к корню документа (HTML)
     if (CFG.visual.bgTransparent) {
+      document.documentElement.classList.add('transparent-bg');
       document.body.classList.add('transparent-bg');
       document.getElementById('game-app').classList.add('transparent-bg');
     } else {
+      document.documentElement.classList.remove('transparent-bg');
       document.body.classList.remove('transparent-bg');
       document.getElementById('game-app').classList.remove('transparent-bg');
     }
@@ -277,7 +281,7 @@
     btnStart.style.fontFamily = font;
     btnAgain.style.fontFamily = font;
     document.getElementById('uiTitle').style.fontFamily = font;
-    document.querySelector('.score-val').style.fontFamily = font; // Чтобы цифры очков тоже были нужным шрифтом
+    document.querySelector('.score-val').style.fontFamily = font;
 
     // Стили кнопки
     const size = CFG.ui.btnSize || 5;
@@ -299,7 +303,6 @@
 
   const imgCache = {};
   
-  // Проверка: загружена ли валидная картинка?
   function hasValidImage(val) {
     if (!val || val.trim() === '') return false;
     if (!imgCache[val]) {
@@ -394,7 +397,6 @@
       document.getElementById('progress-fill').style.width = `${pct}%`;
       document.getElementById('score-display').textContent = this.score;
       
-      // Форматируем комбо: убираем .0 если целое число (x2 вместо x2.0)
       let comboText = this.combo % 1 === 0 ? this.combo.toFixed(0) : this.combo.toFixed(1);
       document.getElementById('combo-display').textContent = `x${comboText}`;
 
@@ -406,9 +408,8 @@
       const assetsList = (CFG.visual.targets && CFG.visual.targets.length > 0) ? [...CFG.visual.targets] : [""];
       
       const targetW = CFG.visual.targetSize || 90;
-      const maxCols = 2; // Симметрия (по 2 в ряд)
+      const maxCols = 2;
       
-      // Поднимаем мишени ВЫСОКО под вопрос! Чтобы далеко от пуза.
       const startY = Math.max(160, canvas.height * 0.22); 
       const rowHeight = targetW + 60; 
       
@@ -434,7 +435,7 @@
                  y: startY + (r * rowHeight),
                  w: targetW, h: targetW,
                  hitX: 0, hitY: 0, hitW: 0, hitH: 0,
-                 speed: (Math.random() * 1.5 + 1.0) * (c % 2 === 0 ? 1 : -1) // Движение только по X
+                 speed: (Math.random() * 1.5 + 1.0) * (c % 2 === 0 ? 1 : -1)
               });
               answerIndex++;
           }
@@ -465,7 +466,6 @@
       this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
 
       this.targets.forEach(t => {
-        // Строго ровное движение по горизонтали
         t.x += t.speed;
         if (t.x > t.maxX) { t.x = t.maxX; t.speed *= -1; }
         if (t.x < t.minX) { t.x = t.minX; t.speed *= -1; }
@@ -492,8 +492,7 @@
         if (this.hook.length > this.hook.maxLength) {
            this.hookState = 'retracting';
            this.combo = 1.0; 
-           let comboText = this.combo % 1 === 0 ? this.combo.toFixed(0) : this.combo.toFixed(1);
-           document.getElementById('combo-display').textContent = `x${comboText}`;
+           document.getElementById('combo-display').textContent = `x1`;
         }
       } 
       else if (this.hookState === 'retracting') {
@@ -553,19 +552,14 @@
         let textY;
 
         if (hasImg) {
-          // Картинка ЕСТЬ: Рисуем её, а текст СТРОГО НАД НЕЙ
           renderEntity(t.asset, t.x, t.y, t.w);
           textY = t.y - t.h/2 - th/2 - 10;
-          
           t.hitX = t.x; t.hitY = t.y; t.hitW = t.w; t.hitH = t.h;
         } else {
-          // Картинки НЕТ: Текст становится самой мишенью, выравниваем по центру Y
           textY = t.y;
-          
           t.hitX = t.x; t.hitY = textY; t.hitW = tw; t.hitH = th;
         }
 
-        // Рисуем плашку ответа (тонкая рамка, как у HUD)
         ctx.fillStyle = 'rgba(15, 20, 25, 0.95)';
         ctx.beginPath(); ctx.roundRect(t.x - tw/2, textY - th/2, tw, th, 12); ctx.fill();
         

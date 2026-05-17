@@ -74,8 +74,8 @@
     .btn.ghost{ background:#fff; color:#111; border:2px solid #ccc; }
     .status{ margin-left:auto; font-weight:900; color:#333; padding:10px 12px; background:#eee; border-radius:999px;}
 
-    .previewOuter{ flex:1; background:#f0f0f0; border-radius:14px; overflow:hidden; position:relative; }
-    iframe{ width:100%; height:100%; border:none; }
+    .previewOuter{ flex:1; background:#000; border-radius:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+    .previewOuter iframe{ width:100%; height:auto; aspect-ratio:16/9; max-height:100%; max-width:100%; border:none; }
 
     .card{ background:rgba(255,255,255,.6); border:1px solid var(--stroke); border-radius:14px; padding:14px; margin-bottom:12px; }
     .card h2{ margin:0 0 10px; font-size:15px; border-bottom:2px solid var(--primary); padding-bottom:8px; }
@@ -177,11 +177,12 @@
 
         <div class="tabPanel" data-panel="visual">
           <div class="card">
-            <h2>🎨 Изображения (Ссылки)</h2>
+            <h2>🎨 Изображения и Звуки (Ссылки)</h2>
             <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif). Каждая мишень с новой строки (будут браться рандомно).</p>
             <div class="qStack">
               <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="hero.png"></div>
               <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="hook.png"></div>
+              <div><label>Звук крюка (URL)</label><input id="sound_hook" type="text" value="https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3"></div>
               <div><label>Мишени (Targets)</label><textarea id="img_target" placeholder="target.png&#10;target2.png">target.png</textarea></div>
             </div>
           </div>
@@ -194,10 +195,10 @@
                 <input id="bg_transparent" type="checkbox">
               </div>
               <div><label>Цвет 3D-цепи</label><input id="color_rope" type="color" value="#7f8c8d"></div>
-              <div><label>Фон вопроса</label><input id="color_qbox" type="color" value="#ffffff"></div>
+              <div><label>Фон вопроса (и плашек мишеней)</label><input id="color_qbox" type="color" value="#ffffff"></div>
               <div>
                 <label>Скорость мишеней</label>
-                <input id="target_speed" type="range" min="0.1" max="1" step="0.1" value="1">
+                <input id="target_speed" type="range" min="0" max="5" step="0.1" value="1">
               </div>
               <div>
                 <label>Размер персонажа</label>
@@ -253,8 +254,16 @@
             <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст над мишенями</h3>
             <div class="grid2">
               <div><label>Цвет текста</label><input id="t_color" type="color" value="#ffffff"></div>
-              <div><label>Неоновое свечение (Тень)</label><input id="t_glow" type="color" value="#000000"></div>
-              <div style="grid-column: 1 / -1">
+              <div><label>Цвет эффекта (Свечения)</label><input id="t_glow" type="color" value="#000000"></div>
+              <div>
+                <label>Стиль рамки</label>
+                <select id="t_border">
+                  <option value="solid">Неоновая обводка</option>
+                  <option value="glow">Свечение (Без рамки)</option>
+                  <option value="none">Без эффектов</option>
+                </select>
+              </div>
+              <div>
                 <label>Размер шрифта мишеней</label>
                 <input id="t_size" type="range" min="10" max="50" value="22">
               </div>
@@ -347,7 +356,7 @@
         bgTransparent: document.getElementById('bg_transparent').checked,
         hero: document.getElementById('img_hero').value || "hero.png",
         hook: document.getElementById('img_hook').value || "hook.png",
-        hookSound: "https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3",
+        hookSound: document.getElementById('sound_hook').value || "https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3",
         targets: parseLines(document.getElementById('img_target').value).filter(x=>x),
         targetSize: parseInt(document.getElementById('target_size').value) || 90,
         ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
@@ -362,6 +371,7 @@
         qSize: parseFloat(document.getElementById('q_size').value) || 4.5,
         tColor: document.getElementById('t_color').value || '#ffffff',
         tGlow: document.getElementById('t_glow').value || '#000000',
+        tBorder: document.getElementById('t_border').value || 'solid',
         tSize: parseInt(document.getElementById('t_size').value) || 22
       },
       gameplay: { 

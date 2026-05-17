@@ -74,8 +74,19 @@
     .btn.ghost{ background:#fff; color:#111; border:2px solid #ccc; }
     .status{ margin-left:auto; font-weight:900; color:#333; padding:10px 12px; background:#eee; border-radius:999px;}
 
-    .previewOuter{ flex:1; background:#000; border-radius:14px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
-    .previewOuter iframe{ width:100%; height:auto; aspect-ratio:16/9; max-height:100%; max-width:100%; border:none; }
+    .previewOuter{ 
+      flex:1; background:#111; border-radius:14px; 
+      display:flex; align-items:center; justify-content:center; 
+      padding: 10px;
+    }
+    .iframe-wrapper {
+      width: 100%; max-height: 100%; aspect-ratio: 16 / 9;
+      position: relative; border-radius: 8px; overflow: hidden;
+    }
+    .iframe-wrapper iframe {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%; border: none; background: #000;
+    }
 
     .card{ background:rgba(255,255,255,.6); border:1px solid var(--stroke); border-radius:14px; padding:14px; margin-bottom:12px; }
     .card h2{ margin:0 0 10px; font-size:15px; border-bottom:2px solid var(--primary); padding-bottom:8px; }
@@ -112,7 +123,7 @@
         <button class="tab active" data-tab="tasks">Задания</button>
         <button class="tab" data-tab="settings">Интерфейс</button>
         <button class="tab" data-tab="visual">Графика</button>
-        <button class="tab" data-tab="text">Тексты и Шрифты</button>
+        <button class="tab" data-tab="text">Элементы (Стили)</button>
       </div>
     </div>
 
@@ -178,7 +189,7 @@
         <div class="tabPanel" data-panel="visual">
           <div class="card">
             <h2>🎨 Изображения и Звуки (Ссылки)</h2>
-            <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif). Каждая мишень с новой строки (будут браться рандомно).</p>
+            <p style="font-size:12px; color:#666;">Можно вставить эмодзи или прямую ссылку на картинку (png, gif). Каждая мишень с новой строки.</p>
             <div class="qStack">
               <div><label>Персонаж (Hero)</label><input id="img_hero" type="text" value="hero.png"></div>
               <div><label>Крюк (Hook)</label><input id="img_hook" type="text" value="hook.png"></div>
@@ -195,11 +206,16 @@
                 <input id="bg_transparent" type="checkbox">
               </div>
               <div><label>Цвет 3D-цепи</label><input id="color_rope" type="color" value="#7f8c8d"></div>
-              <div><label>Фон вопроса (и плашек мишеней)</label><input id="color_qbox" type="color" value="#ffffff"></div>
+              
               <div>
                 <label>Скорость мишеней</label>
                 <input id="target_speed" type="range" min="0" max="5" step="0.1" value="1">
               </div>
+              <div>
+                <label>Скорость крюка</label>
+                <input id="hook_speed" type="range" min="1" max="30" step="1" value="10">
+              </div>
+
               <div>
                 <label>Размер персонажа</label>
                 <input id="hero_size" type="range" min="40" max="250" value="150">
@@ -226,10 +242,10 @@
 
         <div class="tabPanel" data-panel="text">
           <div class="card">
-            <h2>🔤 Шрифты и Стили</h2>
+            <h2>🔤 Настройки Элементов Интерфейса</h2>
             <div class="qStack">
               <div>
-                <label>Шрифт игры</label>
+                <label>Общий Шрифт Игры</label>
                 <select id="font_family">
                   <option value="Montserrat">Montserrat (Современный)</option>
                   <option value="Fredoka One">Fredoka One (Жирный Игровой)</option>
@@ -241,33 +257,62 @@
               </div>
             </div>
             
-            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст вопроса</h3>
+            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c; border-bottom: 1px solid #ccc; padding-bottom:4px;">1. Вопрос</h3>
             <div class="grid2">
-              <div><label>Цвет текста</label><input id="q_color" type="color" value="#111111"></div>
-              <div><label>Цвет неоновой обводки рамок (и текст вопроса)</label><input id="q_glow" type="color" value="#00ffcc"></div>
+              <div><label>Цвет текста</label><input id="q_color" type="color" value="#ffffff"></div>
+              <div><label>Цвет подложки</label><input id="q_bg" type="color" value="#1a252f"></div>
+              <div><label>Цвет эффекта (Свечения)</label><input id="q_glow" type="color" value="#00ffcc"></div>
+              <div>
+                <label>Стиль рамки</label>
+                <select id="q_border">
+                  <option value="both">Обводка + Свечение</option>
+                  <option value="solid">Только Обводка</option>
+                  <option value="glow">Только Свечение</option>
+                  <option value="none">Без рамки и подсветки</option>
+                </select>
+              </div>
               <div style="grid-column: 1 / -1">
                 <label>Размер шрифта вопроса</label>
                 <input id="q_size" type="range" min="2" max="10" step="0.5" value="4.5">
               </div>
             </div>
 
-            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c;">Текст над мишенями</h3>
+            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c; border-bottom: 1px solid #ccc; padding-bottom:4px;">2. Варианты ответов (Мишени)</h3>
             <div class="grid2">
               <div><label>Цвет текста</label><input id="t_color" type="color" value="#ffffff"></div>
-              <div><label>Цвет эффекта (Свечения)</label><input id="t_glow" type="color" value="#000000"></div>
+              <div><label>Цвет подложки</label><input id="t_bg" type="color" value="#1a252f"></div>
+              <div><label>Цвет эффекта (Свечения)</label><input id="t_glow" type="color" value="#00ffcc"></div>
               <div>
                 <label>Стиль рамки</label>
                 <select id="t_border">
-                  <option value="solid">Неоновая обводка</option>
-                  <option value="glow">Свечение (Без рамки)</option>
-                  <option value="none">Без эффектов</option>
+                  <option value="solid">Только Обводка</option>
+                  <option value="glow">Только Свечение</option>
+                  <option value="both">Обводка + Свечение</option>
+                  <option value="none">Без рамки и подсветки</option>
                 </select>
               </div>
-              <div>
+              <div style="grid-column: 1 / -1">
                 <label>Размер шрифта мишеней</label>
                 <input id="t_size" type="range" min="10" max="50" value="22">
               </div>
             </div>
+
+            <h3 style="font-size: 13px; margin: 15px 0 5px; color:#e74c3c; border-bottom: 1px solid #ccc; padding-bottom:4px;">3. Верхняя панель (Прогресс и Очки)</h3>
+            <div class="grid2">
+              <div><label>Цвет текста</label><input id="hud_color" type="color" value="#ffffff"></div>
+              <div><label>Цвет подложки</label><input id="hud_bg" type="color" value="#1a252f"></div>
+              <div><label>Цвет эффекта (Свечения)</label><input id="hud_glow" type="color" value="#00ffcc"></div>
+              <div>
+                <label>Стиль рамки</label>
+                <select id="hud_border">
+                  <option value="both">Обводка + Свечение</option>
+                  <option value="solid">Только Обводка</option>
+                  <option value="glow">Только Свечение</option>
+                  <option value="none">Без рамки и подсветки</option>
+                </select>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -282,7 +327,9 @@
         </div>
 
         <div class="previewOuter">
-          <iframe id="preview"></iframe>
+          <div class="iframe-wrapper">
+             <iframe id="preview"></iframe>
+          </div>
         </div>
       </div>
     </div>
@@ -360,22 +407,32 @@
         targets: parseLines(document.getElementById('img_target').value).filter(x=>x),
         targetSize: parseInt(document.getElementById('target_size').value) || 90,
         ropeColor: document.getElementById('color_rope').value || "#bdc3c7",
-        qBoxColor: document.getElementById('color_qbox').value || "#ffffff",
+        
         heroSize: parseInt(document.getElementById('hero_size').value) || 150,
         heroX: parseInt(document.getElementById('hero_x').value) || 0,
         hookSize: parseInt(document.getElementById('hook_size').value) || 60,
         hookOffsetY: parseInt(document.getElementById('hook_y').value) || 0,
         fontFamily: document.getElementById('font_family').value || 'Montserrat',
+        
         qColor: document.getElementById('q_color').value || '#ffffff',
+        qBg: document.getElementById('q_bg').value || '#1a252f',
         qGlow: document.getElementById('q_glow').value || '#00ffcc',
+        qBorder: document.getElementById('q_border').value || 'both',
         qSize: parseFloat(document.getElementById('q_size').value) || 4.5,
+        
         tColor: document.getElementById('t_color').value || '#ffffff',
-        tGlow: document.getElementById('t_glow').value || '#000000',
+        tBg: document.getElementById('t_bg').value || '#1a252f',
+        tGlow: document.getElementById('t_glow').value || '#00ffcc',
         tBorder: document.getElementById('t_border').value || 'solid',
-        tSize: parseInt(document.getElementById('t_size').value) || 22
+        tSize: parseInt(document.getElementById('t_size').value) || 22,
+
+        hudColor: document.getElementById('hud_color').value || '#ffffff',
+        hudBg: document.getElementById('hud_bg').value || '#1a252f',
+        hudGlow: document.getElementById('hud_glow').value || '#00ffcc',
+        hudBorder: document.getElementById('hud_border').value || 'both'
       },
       gameplay: { 
-        hookSpeed: 10, 
+        hookSpeed: parseFloat(document.getElementById('hook_speed').value) || 10, 
         swingSpeed: 0.035,
         targetSpeed: parseFloat(document.getElementById('target_speed').value) || 1 
       }, 

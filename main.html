@@ -18,8 +18,6 @@
 
   <style>
     :root {
-      --btn-color: #e74c3c;
-      --btn-glow: #c0392b;
       --theme-glow: #00ffcc;
     }
     
@@ -38,6 +36,8 @@
     }
     #game-app.transparent-bg { background: transparent !important; }
 
+    canvas { display: block; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1; background: transparent; }
+
     /* === СОВРЕМЕННЫЙ ИГРОВОЙ HUD === */
     .ui-layer {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -55,7 +55,7 @@
     .hud-center { flex: 2; display: flex; justify-content: center; }
     .hud-right { flex: 1; display: flex; justify-content: flex-end; }
 
-    /* === УНИФИЦИРОВАННЫЕ ПАНЕЛИ (Заменяют старые glowing-wrap) === */
+    /* === УНИФИЦИРОВАННЫЕ ПАНЕЛИ === */
     .hud-panel {
       position: relative;
       border-radius: 15px;
@@ -87,8 +87,6 @@
     .score-val { font-size: 4vmin; font-weight: 900; line-height: 1; }
     .combo-badge { font-size: 3vmin; font-weight: 900; display: flex; align-items: center; gap: 6px; }
 
-    canvas { display: block; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1;}
-
     .overlay {
       position: absolute; inset: 0; z-index: 100; background: rgba(10, 10, 10, 0.95);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -115,15 +113,13 @@
 
     /* === КНОПКИ === */
     .btn-wrap {
-      border-radius: 50px; cursor: pointer; pointer-events: auto; margin-top: 30px; transition: transform 0.1s;
+      border-radius: 49px; cursor: pointer; pointer-events: auto; margin-top: 30px; transition: transform 0.1s;
     }
     .btn-wrap:active { transform: scale(0.92); filter: brightness(0.8); }
     .btn {
-      padding: 12px 45px; border-radius: 49px; color: #fff; text-transform: uppercase;
-      background: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 45%, rgba(0,0,0,0.3) 100%), var(--btn-color);
-      border: none; outline: none; pointer-events: none; 
-      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-      box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2), 0 0 15px var(--btn-glow);
+      padding: 12px 45px; border-radius: 49px; text-transform: uppercase;
+      outline: none; pointer-events: none; 
+      box-sizing: border-box; font-weight: 900;
     }
     
     @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
@@ -158,6 +154,8 @@
   <canvas id="gameCanvas"></canvas>
   <div id="targets-container" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:5;"></div>
   <div id="floaty-container"></div>
+  
+  <div id="mute-toggle" style="position: absolute; bottom: 20px; right: 20px; font-size: 30px; cursor: pointer; z-index: 1000; opacity: 0.7; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5)); transition: opacity 0.2s;">🔊</div>
 
   <div id="loader-screen" class="overlay">
     <div class="spinner"></div>
@@ -190,7 +188,7 @@
     <div id="cfgNote" style="margin-top:10px; opacity:0.8;"></div>
     
     <div class="btn-wrap" id="btnStartWrap">
-      <div class="btn" id="btnStart">СТАРТ</div>
+      <div class="hud-panel btn" id="btnStart">СТАРТ</div>
     </div>
   </div>
 
@@ -200,7 +198,7 @@
     <p style="font-size: 6vmin; font-weight: bold; color:var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow); margin: 10px 0 30px 0;" id="end-score">0</p>
     
     <div class="btn-wrap" id="btnAgainWrap">
-      <div class="btn" id="btnAgain">ЕЩЁ РАЗ</div>
+      <div class="hud-panel btn" id="btnAgain">ЕЩЁ РАЗ</div>
     </div>
   </div>
 </div>
@@ -219,14 +217,15 @@
     },
     visual: { 
       bgTransparent: false,
-      hero: "hero.png", hook: "hook.png", hookSound: "", targets: ["target.png"], 
+      hero: "hero.png", hook: "hook.png", targets: ["target.png"], 
       ropeColor: "#bdc3c7", 
       heroSize: 150, heroX: 0, hookSize: 60, hookOffsetY: 0, targetSize: 90,
       fontFamily: "Montserrat", 
       
-      qColor: "#ffffff", qBg: "rgba(15, 20, 25, 0.95)", qGlow: "#00ffcc", qBorder: "both", qSize: 4.5,
-      tColor: "#ffffff", tBg: "rgba(15, 20, 25, 0.95)", tGlow: "#00ffcc", tBorder: "solid", tSize: 22,
-      hudColor: "#ffffff", hudBg: "rgba(15, 20, 25, 0.95)", hudGlow: "#00ffcc", hudBorder: "both"
+      qColor: "#ffffff", qBg: "rgba(15, 20, 25, 0.95)", qGlow: "#00ffcc", qBorder: "both", qTextGlow: true, qSize: 4.5,
+      tColor: "#ffffff", tBg: "rgba(15, 20, 25, 0.95)", tGlow: "#00ffcc", tBorder: "solid", tTextGlow: false, tSize: 22,
+      hudColor: "#ffffff", hudBg: "rgba(15, 20, 25, 0.95)", hudGlow: "#00ffcc", hudBorder: "both", hudTextGlow: true,
+      btnColor: "#ffffff", btnBg: "#e74c3c", btnGlow: "#c0392b", btnBorder: "both", btnTextGlow: false
     },
     gameplay: { hookSpeed: 10, swingSpeed: 0.035, targetSpeed: 1 }, 
     tasks: [] 
@@ -234,6 +233,17 @@
 
   const hookAudio = new Audio();
   const imgCache = {};
+  let isMuted = false;
+
+  // --- ЛОГИКА КНОПКИ ЗВУКА ---
+  const muteBtn = document.getElementById('mute-toggle');
+  muteBtn.addEventListener('mousedown', (e) => { e.stopPropagation(); });
+  muteBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); }, {passive: false});
+  muteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      isMuted = !isMuted;
+      muteBtn.textContent = isMuted ? '🔇' : '🔊';
+  });
 
   window.addEventListener('message', (e) => {
     if (e.data && e.data.type === 'MINER_CFG') {
@@ -264,6 +274,7 @@
       const bg = CFG.visual[prefix+'Bg'] || 'rgba(15, 20, 25, 0.95)';
       const glow = CFG.visual[prefix+'Glow'] || '#00ffcc';
       const borderStyle = CFG.visual[prefix+'Border'] || 'solid';
+      const textGlowOn = CFG.visual[prefix+'TextGlow'];
 
       el.style.color = col;
       el.style.backgroundColor = bg;
@@ -282,7 +293,8 @@
           el.style.boxShadow = 'none';
       }
       
-      if (glow !== '#000000' && borderStyle !== 'none') {
+      // Свечение букв включается строго по галочке
+      if (textGlowOn && glow !== '#000000') {
           el.style.textShadow = `0 0 10px ${glow}`;
       } else {
           el.style.textShadow = 'none';
@@ -317,7 +329,8 @@
       document.getElementById('loader-screen').style.background = '#111';
     }
 
-    if (CFG.visual.hookSound) hookAudio.src = CFG.visual.hookSound;
+    hookAudio.src = "https://github.com/NikaShum93/hk/raw/refs/heads/main/chain.mp3";
+    hookAudio.preload = 'auto';
 
     let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "#00ffcc";
     document.documentElement.style.setProperty('--theme-glow', themeGlow);
@@ -330,8 +343,6 @@
     document.querySelector('.loader-text').style.fontFamily = font;
 
     const size = CFG.ui.btnSize || 5;
-    document.documentElement.style.setProperty('--btn-color', CFG.ui.btnColor || "#e74c3c");
-    document.documentElement.style.setProperty('--btn-glow', CFG.ui.btnGlow || "#c0392b");
     btnStart.style.fontSize = `${size}vmin`;
     btnAgain.style.fontSize = `${size}vmin`;
 
@@ -346,13 +357,17 @@
     applyPanelStyle(document.getElementById('hud-progress-panel'), 'hud');
     applyPanelStyle(document.getElementById('hud-score-panel'), 'hud');
     
-    // Цвет наполнения прогресс-бара = цвет эффекта HUD
+    // 3. Кнопки (применяем универсальный стиль)
+    applyPanelStyle(btnStart, 'btn');
+    applyPanelStyle(btnAgain, 'btn');
+    
+    // Цвет наполнения прогресс-бара
     const pFill = document.getElementById('progress-fill');
     const hGlow = CFG.visual.hudGlow || '#00ffcc';
     pFill.style.background = hGlow;
     pFill.style.boxShadow = `0 0 15px ${hGlow}`;
 
-    // --- ПОЗИЦИЯ ПРИМЕНЯЕТСЯ ТОЛЬКО К СТАРТУ, ЧТОБЫ НЕ ЛОМАТЬ ФИНАЛЬНЫЙ ЭКРАН ---
+    // --- ПОЗИЦИЯ ПРИМЕНЯЕТСЯ ТОЛЬКО К СТАРТУ ---
     const btnWrapStart = document.getElementById('btnStartWrap');
     if (CFG.ui.btnY) {
       btnWrapStart.style.position = 'absolute';
@@ -558,7 +573,7 @@
               el.className = 'target-html-label';
               el.innerHTML = ans.text;
               
-              applyPanelStyle(el, 't'); // Применяем те же стили!
+              applyPanelStyle(el, 't'); // Применяем стили из настроек
               el.style.fontSize = (CFG.visual.tSize || 22) + "px";
               el.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
 
@@ -594,9 +609,9 @@
         this.hookState = 'shooting';
         this.hook.maxLength = canvas.height * 1.2;
         
-        if (CFG.visual.hookSound) {
-            hookAudio.currentTime = 0;
-            hookAudio.play().catch(e => console.log('Audio error:', e));
+        if (!isMuted && hookAudio.src) {
+            let snd = hookAudio.cloneNode();
+            snd.play().catch(e => console.log('Audio error:', e));
         }
       }
     },
@@ -758,9 +773,9 @@
   canvas.addEventListener('touchstart', (e) => { e.preventDefault(); Game.shoot(); }, {passive: false});
 
   function playHookSoundAndStart() {
-    if (CFG.visual.hookSound) {
-        hookAudio.currentTime = 0;
-        hookAudio.play().catch(e => console.log('Audio start error:', e));
+    if (!isMuted && hookAudio.src) {
+        let snd = hookAudio.cloneNode();
+        snd.play().catch(e => console.log('Audio start error:', e));
     }
     Game.start();
   }

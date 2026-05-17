@@ -144,7 +144,7 @@
       50% { opacity: 0.5; }
     }
 
-    /* === КНОПКА СТАРТ === */
+    /* === КНОПКИ === */
     .btn-wrap {
       border-radius: 50px; cursor: pointer; pointer-events: auto; transition: transform 0.1s;
     }
@@ -182,8 +182,6 @@
     .target-html-label {
       position: absolute;
       transform: translate(-50%, -50%);
-      background: rgba(15, 20, 25, 0.95);
-      border: 2px solid var(--theme-glow);
       border-radius: 12px;
       padding: 8px 15px;
       white-space: nowrap;
@@ -250,10 +248,10 @@
     </div>
   </div>
 
-  <div id="end-screen" class="overlay" style="display:none;">
-    <h1 style="font-size: 15vmin; text-shadow:none;" id="end-emoji">🏆</h1>
-    <h1 id="end-title" style="font-family: inherit;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
-    <p style="font-size: 6vmin; font-weight: bold; color:var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow); margin: 10px 0;" id="end-score">0</p>
+  <div id="end-screen" class="overlay" style="display:none; flex-direction: column; justify-content: center; align-items: center;">
+    <h1 style="font-size: 15vmin; text-shadow:none; margin-bottom: 0;" id="end-emoji">🏆</h1>
+    <h1 id="end-title" style="font-family: inherit; margin: 10px 0;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
+    <p style="font-size: 6vmin; font-weight: bold; color:var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow); margin: 10px 0 30px 0;" id="end-score">0</p>
     
     <div class="glowing-wrap btn-wrap" id="btnAgainWrap">
       <div class="glowing-inner btn" id="btnAgain">ЕЩЁ РАЗ</div>
@@ -279,7 +277,7 @@
       ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
       heroSize: 150, heroX: 0, hookSize: 60, hookOffsetY: 0, targetSize: 90,
       fontFamily: "Montserrat", qColor: "#ffffff", qGlow: "#00ffcc", qSize: 4.5,
-      tColor: "#ffffff", tGlow: "#000000", tSize: 22
+      tColor: "#ffffff", tGlow: "#000000", tBorder: "solid", tSize: 22
     },
     gameplay: { hookSpeed: 10, swingSpeed: 0.035, targetSpeed: 1 }, 
     tasks: [] 
@@ -366,18 +364,12 @@
       qbInner.style.background = CFG.visual.qBoxColor;
     }
 
-    // ПРИМЕНЕНИЕ ПОЗИЦИИ И АНИМАЦИИ КНОПКИ
+    // ПОЗИЦИЯ ПРИМЕНЯЕТСЯ ТОЛЬКО К СТАРТУ, ЧТОБЫ НЕ ЛОМАТЬ ФИНАЛЬНЫЙ ЭКРАН
     const btnWrapStart = document.getElementById('btnStartWrap');
-    const btnWrapAgain = document.getElementById('btnAgainWrap');
-    
     if (CFG.ui.btnY) {
       btnWrapStart.style.position = 'absolute';
       btnWrapStart.style.top = CFG.ui.btnY + '%';
       btnWrapStart.style.marginTop = '0';
-      
-      btnWrapAgain.style.position = 'absolute';
-      btnWrapAgain.style.top = CFG.ui.btnY + '%';
-      btnWrapAgain.style.marginTop = '0';
     }
 
     if (CFG.ui.btnAnim === 'pulse') {
@@ -539,16 +531,26 @@
       const targetW = CFG.visual.targetSize || 90;
       const maxCols = 2;
       
-      // СТРОГИЙ ОТСТУП СВЕРХУ (чтобы мишени не лезли на вопрос)
-      const startY = Math.max(260, canvas.height * 0.35); 
-      const rowHeight = targetW + 60; 
+      // СТРОГИЕ ОТСТУПЫ: высчитываем безопасную зону
+      const uiHeader = document.querySelector('.hud-header');
+      const uiHeaderBottom = uiHeader ? uiHeader.offsetHeight + 30 : 120;
+      const heroTop = canvas.height - (CFG.visual.heroSize || 150) - 40;
+
+      const safeTop = Math.max(200, uiHeaderBottom + targetW/2);
+      const safeBottom = heroTop - targetW/2;
+      const availableH = Math.max(10, safeBottom - safeTop);
       
       let answerIndex = 0;
       let totalRows = Math.ceil(allAnswers.length / maxCols);
+      
+      const rowSpacing = totalRows > 1 ? availableH / (totalRows - 1) : 0;
 
       for (let r = 0; r < totalRows; r++) {
           let itemsInRow = Math.min(maxCols, allAnswers.length - answerIndex);
           let zoneWidth = canvas.width / itemsInRow;
+          
+          let yPos = safeTop + (r * rowSpacing);
+          if (totalRows === 1) yPos = safeTop + availableH / 2; // Если один ряд, ставим по центру зоны
 
           for (let c = 0; c < itemsInRow; c++) {
               let ans = allAnswers[answerIndex];
@@ -562,14 +564,27 @@
               el.className = 'target-html-label';
               el.innerHTML = ans.text;
               
+              // ПРИМЕНЕНИЕ ЦВЕТОВ И СТИЛЕЙ
+              el.style.background = CFG.visual.qBoxColor || 'rgba(15, 20, 25, 0.95)';
               el.style.color = CFG.visual.tColor || '#ffffff';
               el.style.fontSize = (CFG.visual.tSize || 22) + "px";
               el.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
               
+              let borderStyle = CFG.visual.tBorder || 'solid';
               let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "#00ffcc";
-              el.style.borderColor = themeGlow;
               
-              if(CFG.visual.tGlow && CFG.visual.tGlow !== "#000000") {
+              if (borderStyle === 'solid') {
+                  el.style.border = `2px solid ${themeGlow}`;
+                  el.style.boxShadow = 'none';
+              } else if (borderStyle === 'glow') {
+                  el.style.border = 'none';
+                  el.style.boxShadow = `0 0 15px ${themeGlow}`;
+              } else {
+                  el.style.border = 'none';
+                  el.style.boxShadow = 'none';
+              }
+              
+              if (CFG.visual.tGlow && CFG.visual.tGlow !== "#000000") {
                    el.style.textShadow = `0 0 10px ${CFG.visual.tGlow}`;
               }
 
@@ -582,7 +597,7 @@
                  minX: minX,
                  maxX: Math.max(minX, maxX),
                  x: minX + Math.random() * Math.max(0, maxX - minX),
-                 y: startY + (r * rowHeight),
+                 y: yPos,
                  w: targetW, h: targetW,
                  hitX: 0, hitY: 0, hitW: 0, hitH: 0,
                  speed: (Math.random() * 1.5 + 1.0) * (c % 2 === 0 ? 1 : -1) * speedMul,

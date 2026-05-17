@@ -100,6 +100,9 @@
       font-weight:800; opacity:0; transition:.2s; pointer-events:none;
     }
     .toast.show{ opacity:1; }
+
+    .inline-check { display:flex; align-items:center; gap:8px; background:#f9f9f9; padding:6px 10px; border-radius:8px; border:1px solid #ddd; }
+    .inline-check label { margin:0; font-size:11px; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -261,7 +264,7 @@
             <div class="grid2">
               <div><label>Цвет текста</label><input id="q_color" type="color" value="#ffffff"></div>
               <div><label>Цвет подложки</label><input id="q_bg" type="color" value="#1a252f"></div>
-              <div><label>Цвет эффекта (Свечения)</label><input id="q_glow" type="color" value="#00ffcc"></div>
+              <div><label>Цвет эффекта (Рамки)</label><input id="q_glow" type="color" value="#00ffcc"></div>
               <div>
                 <label>Стиль рамки</label>
                 <select id="q_border">
@@ -271,7 +274,11 @@
                   <option value="none">Без рамки и подсветки</option>
                 </select>
               </div>
-              <div style="grid-column: 1 / -1">
+              <div class="inline-check">
+                <input type="checkbox" id="q_text_glow" checked>
+                <label for="q_text_glow">Свечение букв (Неон)</label>
+              </div>
+              <div>
                 <label>Размер шрифта вопроса</label>
                 <input id="q_size" type="range" min="2" max="10" step="0.5" value="4.5">
               </div>
@@ -281,7 +288,7 @@
             <div class="grid2">
               <div><label>Цвет текста</label><input id="t_color" type="color" value="#ffffff"></div>
               <div><label>Цвет подложки</label><input id="t_bg" type="color" value="#1a252f"></div>
-              <div><label>Цвет эффекта (Свечения)</label><input id="t_glow" type="color" value="#00ffcc"></div>
+              <div><label>Цвет эффекта (Рамки)</label><input id="t_glow" type="color" value="#00ffcc"></div>
               <div>
                 <label>Стиль рамки</label>
                 <select id="t_border">
@@ -291,7 +298,11 @@
                   <option value="none">Без рамки и подсветки</option>
                 </select>
               </div>
-              <div style="grid-column: 1 / -1">
+              <div class="inline-check">
+                <input type="checkbox" id="t_text_glow">
+                <label for="t_text_glow">Свечение букв (Неон)</label>
+              </div>
+              <div>
                 <label>Размер шрифта мишеней</label>
                 <input id="t_size" type="range" min="10" max="50" value="22">
               </div>
@@ -301,7 +312,7 @@
             <div class="grid2">
               <div><label>Цвет текста</label><input id="hud_color" type="color" value="#ffffff"></div>
               <div><label>Цвет подложки</label><input id="hud_bg" type="color" value="#1a252f"></div>
-              <div><label>Цвет эффекта (Свечения)</label><input id="hud_glow" type="color" value="#00ffcc"></div>
+              <div><label>Цвет эффекта (Рамки)</label><input id="hud_glow" type="color" value="#00ffcc"></div>
               <div>
                 <label>Стиль рамки</label>
                 <select id="hud_border">
@@ -310,6 +321,10 @@
                   <option value="glow">Только Свечение</option>
                   <option value="none">Без рамки и подсветки</option>
                 </select>
+              </div>
+              <div class="inline-check" style="grid-column: 1 / -1">
+                <input type="checkbox" id="hud_text_glow" checked>
+                <label for="hud_text_glow">Свечение букв (Неон)</label>
               </div>
             </div>
 
@@ -418,18 +433,21 @@
         qBg: document.getElementById('q_bg').value || '#1a252f',
         qGlow: document.getElementById('q_glow').value || '#00ffcc',
         qBorder: document.getElementById('q_border').value || 'both',
+        qTextGlow: document.getElementById('q_text_glow').checked,
         qSize: parseFloat(document.getElementById('q_size').value) || 4.5,
         
         tColor: document.getElementById('t_color').value || '#ffffff',
         tBg: document.getElementById('t_bg').value || '#1a252f',
         tGlow: document.getElementById('t_glow').value || '#00ffcc',
         tBorder: document.getElementById('t_border').value || 'solid',
+        tTextGlow: document.getElementById('t_text_glow').checked,
         tSize: parseInt(document.getElementById('t_size').value) || 22,
 
         hudColor: document.getElementById('hud_color').value || '#ffffff',
         hudBg: document.getElementById('hud_bg').value || '#1a252f',
         hudGlow: document.getElementById('hud_glow').value || '#00ffcc',
-        hudBorder: document.getElementById('hud_border').value || 'both'
+        hudBorder: document.getElementById('hud_border').value || 'both',
+        hudTextGlow: document.getElementById('hud_text_glow').checked
       },
       gameplay: { 
         hookSpeed: parseFloat(document.getElementById('hook_speed').value) || 10, 
@@ -468,7 +486,8 @@
 
       if(!res.ok) throw new Error("Server error");
 
-      lastIframe = `<iframe src="${BASE_MAIN}?id=${id}" width="100%" height="650" style="border:0;" allow="fullscreen; autoplay"></iframe>`;
+      lastIframe = `<div id="miner-container-${id}" style="width:100%; height:650px; position:relative;"></div>\n<script>\n  (function() {\n    var el = document.getElementById("miner-container-${id}");\n    if(!el) return;\n    var iframe = document.createElement("iframe");\n    iframe.src = "${BASE_MAIN}?id=${id}";\n    iframe.style.width = "100%";\n    iframe.style.height = "100%";\n    iframe.style.border = "none";\n    iframe.style.background = "transparent";\n    iframe.allowTransparency = "true";\n    iframe.allow = "fullscreen; autoplay";\n    el.appendChild(iframe);\n  })();\n<\/script>`;
+
       document.getElementById('statusPill').textContent = 'Готово ✅';
       toast('Игра создана ✅');
     } catch(e) {

@@ -55,33 +55,17 @@
     .hud-center { flex: 2; display: flex; justify-content: center; }
     .hud-right { flex: 1; display: flex; justify-content: flex-end; }
 
-    /* === БЕГАЮЩИЙ НЕОН (ОБЕРТКА) === */
-    .glowing-wrap {
+    /* === УНИФИЦИРОВАННЫЕ ПАНЕЛИ (Заменяют старые glowing-wrap) === */
+    .hud-panel {
       position: relative;
-      padding: 1px;
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    }
-    .glowing-wrap::before {
-      content: ""; position: absolute; top: -100%; left: -100%; width: 300%; height: 300%;
-      background: conic-gradient(transparent, transparent, var(--theme-glow), transparent 20%);
-      animation: spinGlow 3s linear infinite;
-      z-index: 0;
-    }
-    .glowing-inner {
-      position: relative;
-      background: rgba(15, 20, 25, 0.95);
-      backdrop-filter: blur(10px);
       border-radius: 15px;
-      z-index: 1;
       display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
     }
-    @keyframes spinGlow { 100% { transform: rotate(360deg); } }
 
     /* === ТОЛСТЫЙ ПРОГРЕСС-БАР === */
-    .p-wrap { width: 100%; max-width: 250px; border-radius: 12px; }
-    .p-inner { padding: 10px 15px; border-radius: 11px; width: 100%; display: flex; justify-content: flex-start; min-height: 56px;}
+    .p-wrap { width: 100%; max-width: 250px; padding: 10px 15px; min-height: 56px; justify-content: flex-start; }
     .progress-fill { 
       width: 0%; height: 20px;
       background: var(--theme-glow);
@@ -99,15 +83,9 @@
     }
     
     /* === ОЧКИ И КОМБО === */
-    .s-wrap { border-radius: 12px; }
-    .s-inner { padding: 12px 24px; flex-direction: row; gap: 15px; border-radius: 11px; min-height: 56px;}
-    .score-val { 
-      font-size: 4vmin; font-weight: 900;
-      color: var(--theme-glow); text-shadow: 0 0 10px var(--theme-glow); line-height: 1; 
-    }
-    .combo-badge { 
-      font-size: 3vmin; font-weight: 900; color: #fff; opacity: 0.9; text-shadow: 0 2px 4px #000; display: flex; align-items: center; gap: 6px;
-    }
+    .s-wrap { padding: 12px 24px; flex-direction: row; gap: 15px; min-height: 56px;}
+    .score-val { font-size: 4vmin; font-weight: 900; line-height: 1; }
+    .combo-badge { font-size: 3vmin; font-weight: 900; display: flex; align-items: center; gap: 6px; }
 
     canvas { display: block; width: 100%; height: 100%; position: absolute; top:0; left:0; z-index: 1;}
 
@@ -119,10 +97,7 @@
     h1 { font-family: 'Fredoka One', cursive; font-size: 10vmin; margin: 0; text-shadow: 0 0 20px var(--theme-glow); color: #fff; margin-bottom: 20px;}
     
     /* === ЭКРАН ЗАГРУЗКИ (ЛОУДЕР) === */
-    #loader-screen {
-      z-index: 9999;
-      background: #111;
-    }
+    #loader-screen { z-index: 9999; background: #111; }
     .spinner {
       width: 60px; height: 60px;
       border: 6px solid rgba(255, 255, 255, 0.1);
@@ -133,20 +108,14 @@
     }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .loader-text {
-      font-family: 'Fredoka One', cursive;
-      font-size: 4vmin;
-      color: var(--theme-glow);
-      text-shadow: 0 0 15px var(--theme-glow);
-      animation: pulseText 1.5s infinite;
+      font-family: 'Fredoka One', cursive; font-size: 4vmin; color: var(--theme-glow);
+      text-shadow: 0 0 15px var(--theme-glow); animation: pulseText 1.5s infinite;
     }
-    @keyframes pulseText {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+    @keyframes pulseText { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
     /* === КНОПКИ === */
     .btn-wrap {
-      border-radius: 50px; cursor: pointer; pointer-events: auto; transition: transform 0.1s;
+      border-radius: 50px; cursor: pointer; pointer-events: auto; margin-top: 30px; transition: transform 0.1s;
     }
     .btn-wrap:active { transform: scale(0.92); filter: brightness(0.8); }
     .btn {
@@ -157,18 +126,11 @@
       box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2), 0 0 15px var(--btn-glow);
     }
     
-    @keyframes pulseBtn {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
+    @keyframes pulseBtn { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
     @keyframes glitchBtn {
-      0% { transform: translate(0); }
-      20% { transform: translate(-3px, 3px); }
-      40% { transform: translate(-3px, -3px); }
-      60% { transform: translate(3px, 3px); }
-      80% { transform: translate(3px, -3px); }
-      100% { transform: translate(0); }
+      0% { transform: translate(0); } 20% { transform: translate(-3px, 3px); }
+      40% { transform: translate(-3px, -3px); } 60% { transform: translate(3px, 3px); }
+      80% { transform: translate(3px, -3px); } 100% { transform: translate(0); }
     }
 
     .floating-text {
@@ -182,22 +144,12 @@
     .target-html-label {
       position: absolute;
       transform: translate(-50%, -50%);
-      border-radius: 12px;
-      padding: 8px 15px;
-      white-space: nowrap;
-      text-align: center;
-      font-weight: bold;
-      pointer-events: none;
-      min-width: 60px;
-      box-sizing: border-box;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 5;
+      border-radius: 12px; padding: 8px 15px;
+      white-space: nowrap; text-align: center; font-weight: bold;
+      pointer-events: none; min-width: 60px; box-sizing: border-box;
+      display: flex; align-items: center; justify-content: center; z-index: 5;
     }
-    .target-html-label mjx-container {
-      margin: 0 !important;
-    }
+    .target-html-label mjx-container { margin: 0 !important; }
   </style>
 </head>
 <body>
@@ -215,25 +167,19 @@
   <div class="ui-layer" id="ui-layer" style="display:none;">
     <div class="hud-header">
       <div class="hud-left">
-        <div class="glowing-wrap p-wrap">
-          <div class="glowing-inner p-inner">
-            <div class="progress-fill" id="progress-fill"></div>
-          </div>
+        <div class="hud-panel p-wrap" id="hud-progress-panel">
+          <div class="progress-fill" id="progress-fill"></div>
         </div>
       </div>
       
       <div class="hud-center">
-        <div class="glowing-wrap">
-          <div class="glowing-inner q-inner" id="question-text">Загрузка...</div>
-        </div>
+        <div class="hud-panel q-inner" id="question-text">Загрузка...</div>
       </div>
 
       <div class="hud-right">
-        <div class="glowing-wrap s-wrap">
-          <div class="glowing-inner s-inner">
-            <div class="score-val" id="score-display">0</div>
-            <div class="combo-badge">🔥 <span id="combo-display">x1</span></div>
-          </div>
+        <div class="hud-panel s-wrap" id="hud-score-panel">
+          <div class="score-val" id="score-display" style="color: inherit; text-shadow: inherit;">0</div>
+          <div class="combo-badge" style="color: inherit; text-shadow: inherit;">🔥 <span id="combo-display">x1</span></div>
         </div>
       </div>
     </div>
@@ -243,8 +189,8 @@
     <h1 id="uiTitle">QUIZ MINER</h1>
     <div id="cfgNote" style="margin-top:10px; opacity:0.8;"></div>
     
-    <div class="glowing-wrap btn-wrap" id="btnStartWrap">
-      <div class="glowing-inner btn" id="btnStart">СТАРТ</div>
+    <div class="btn-wrap" id="btnStartWrap">
+      <div class="btn" id="btnStart">СТАРТ</div>
     </div>
   </div>
 
@@ -253,8 +199,8 @@
     <h1 id="end-title" style="font-family: inherit; margin: 10px 0;">ВЫ ИГРАЛИ ВЕЛИКОЛЕПНО!</h1>
     <p style="font-size: 6vmin; font-weight: bold; color:var(--theme-glow); text-shadow: 0 0 15px var(--theme-glow); margin: 10px 0 30px 0;" id="end-score">0</p>
     
-    <div class="glowing-wrap btn-wrap" id="btnAgainWrap">
-      <div class="glowing-inner btn" id="btnAgain">ЕЩЁ РАЗ</div>
+    <div class="btn-wrap" id="btnAgainWrap">
+      <div class="btn" id="btnAgain">ЕЩЁ РАЗ</div>
     </div>
   </div>
 </div>
@@ -274,10 +220,13 @@
     visual: { 
       bgTransparent: false,
       hero: "hero.png", hook: "hook.png", hookSound: "", targets: ["target.png"], 
-      ropeColor: "#bdc3c7", qBoxColor: "#ffffff",
+      ropeColor: "#bdc3c7", 
       heroSize: 150, heroX: 0, hookSize: 60, hookOffsetY: 0, targetSize: 90,
-      fontFamily: "Montserrat", qColor: "#ffffff", qGlow: "#00ffcc", qSize: 4.5,
-      tColor: "#ffffff", tGlow: "#000000", tBorder: "solid", tSize: 22
+      fontFamily: "Montserrat", 
+      
+      qColor: "#ffffff", qBg: "rgba(15, 20, 25, 0.95)", qGlow: "#00ffcc", qBorder: "both", qSize: 4.5,
+      tColor: "#ffffff", tBg: "rgba(15, 20, 25, 0.95)", tGlow: "#00ffcc", tBorder: "solid", tSize: 22,
+      hudColor: "#ffffff", hudBg: "rgba(15, 20, 25, 0.95)", hudGlow: "#00ffcc", hudBorder: "both"
     },
     gameplay: { hookSpeed: 10, swingSpeed: 0.035, targetSpeed: 1 }, 
     tasks: [] 
@@ -306,6 +255,38 @@
         CFG = Object.assign({}, CFG, await res.json());
       }
     } catch (e) { document.getElementById('cfgNote').textContent = '⚠️ Конфиг не найден'; }
+  }
+
+  // --- УНИВЕРСАЛЬНАЯ ФУНКЦИЯ ПРИМЕНЕНИЯ СТИЛЕЙ К ПАНЕЛЯМ ---
+  function applyPanelStyle(el, prefix) {
+      if(!el) return;
+      const col = CFG.visual[prefix+'Color'] || '#ffffff';
+      const bg = CFG.visual[prefix+'Bg'] || 'rgba(15, 20, 25, 0.95)';
+      const glow = CFG.visual[prefix+'Glow'] || '#00ffcc';
+      const borderStyle = CFG.visual[prefix+'Border'] || 'solid';
+
+      el.style.color = col;
+      el.style.backgroundColor = bg;
+      
+      if (borderStyle === 'solid') {
+          el.style.border = `2px solid ${glow}`;
+          el.style.boxShadow = 'none';
+      } else if (borderStyle === 'glow') {
+          el.style.border = 'none';
+          el.style.boxShadow = `0 0 15px ${glow}`;
+      } else if (borderStyle === 'both') {
+          el.style.border = `2px solid ${glow}`;
+          el.style.boxShadow = `0 0 15px ${glow}`;
+      } else {
+          el.style.border = 'none';
+          el.style.boxShadow = 'none';
+      }
+      
+      if (glow !== '#000000' && borderStyle !== 'none') {
+          el.style.textShadow = `0 0 10px ${glow}`;
+      } else {
+          el.style.textShadow = 'none';
+      }
   }
 
   function applyUI() {
@@ -346,7 +327,6 @@
     btnStart.style.fontFamily = font;
     btnAgain.style.fontFamily = font;
     document.getElementById('uiTitle').style.fontFamily = font;
-    document.querySelector('.score-val').style.fontFamily = font;
     document.querySelector('.loader-text').style.fontFamily = font;
 
     const size = CFG.ui.btnSize || 5;
@@ -355,16 +335,24 @@
     btnStart.style.fontSize = `${size}vmin`;
     btnAgain.style.fontSize = `${size}vmin`;
 
-    const qbInner = document.getElementById('question-text');
-    qbInner.style.color = CFG.visual.qColor || "#ffffff";
-    qbInner.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
+    // --- ПРИМЕНЕНИЕ СТИЛЕЙ К ЭЛЕМЕНТАМ ИНТЕРФЕЙСА ---
     
-    // ПРИМЕНЕНИЕ ЦВЕТА ПОДЛОЖКИ ВОПРОСА
-    if (CFG.visual.qBoxColor) {
-      qbInner.style.background = CFG.visual.qBoxColor;
-    }
+    // 1. Вопрос
+    const qbInner = document.getElementById('question-text');
+    applyPanelStyle(qbInner, 'q');
+    qbInner.style.fontSize = (CFG.visual.qSize || 4.5) + "vmin";
 
-    // ПОЗИЦИЯ ПРИМЕНЯЕТСЯ ТОЛЬКО К СТАРТУ, ЧТОБЫ НЕ ЛОМАТЬ ФИНАЛЬНЫЙ ЭКРАН
+    // 2. Верхняя панель (HUD)
+    applyPanelStyle(document.getElementById('hud-progress-panel'), 'hud');
+    applyPanelStyle(document.getElementById('hud-score-panel'), 'hud');
+    
+    // Цвет наполнения прогресс-бара = цвет эффекта HUD
+    const pFill = document.getElementById('progress-fill');
+    const hGlow = CFG.visual.hudGlow || '#00ffcc';
+    pFill.style.background = hGlow;
+    pFill.style.boxShadow = `0 0 15px ${hGlow}`;
+
+    // --- ПОЗИЦИЯ ПРИМЕНЯЕТСЯ ТОЛЬКО К СТАРТУ, ЧТОБЫ НЕ ЛОМАТЬ ФИНАЛЬНЫЙ ЭКРАН ---
     const btnWrapStart = document.getElementById('btnStartWrap');
     if (CFG.ui.btnY) {
       btnWrapStart.style.position = 'absolute';
@@ -531,26 +519,32 @@
       const targetW = CFG.visual.targetSize || 90;
       const maxCols = 2;
       
-      // СТРОГИЕ ОТСТУПЫ: высчитываем безопасную зону
+      // СТРОГИЕ ОТСТУПЫ: высчитываем безопасную зону для мишеней
       const uiHeader = document.querySelector('.hud-header');
-      const uiHeaderBottom = uiHeader ? uiHeader.offsetHeight + 30 : 120;
-      const heroTop = canvas.height - (CFG.visual.heroSize || 150) - 40;
+      const uiHeaderBottom = uiHeader ? uiHeader.offsetHeight + 20 : 100;
+      const heroTop = canvas.height - (CFG.visual.heroSize || 150) - 20;
 
-      const safeTop = Math.max(200, uiHeaderBottom + targetW/2);
-      const safeBottom = heroTop - targetW/2;
+      const safeTop = Math.max(120, uiHeaderBottom + targetW/2 + 10);
+      const safeBottom = heroTop - targetW/2 - 30; // Жесткий отступ над героем
       const availableH = Math.max(10, safeBottom - safeTop);
       
-      let answerIndex = 0;
       let totalRows = Math.ceil(allAnswers.length / maxCols);
       
-      const rowSpacing = totalRows > 1 ? availableH / (totalRows - 1) : 0;
+      // Блок вариантов будет компактным
+      const rowSpacing = targetW + 30; 
+      const totalBlockHeight = (totalRows - 1) * rowSpacing;
+
+      // Центрируем весь блок мишеней в безопасной зоне
+      let startY = safeTop + (availableH - totalBlockHeight) / 2;
+      if (startY < safeTop) startY = safeTop; // Failsafe
+      
+      let answerIndex = 0;
 
       for (let r = 0; r < totalRows; r++) {
           let itemsInRow = Math.min(maxCols, allAnswers.length - answerIndex);
           let zoneWidth = canvas.width / itemsInRow;
           
-          let yPos = safeTop + (r * rowSpacing);
-          if (totalRows === 1) yPos = safeTop + availableH / 2; // Если один ряд, ставим по центру зоны
+          let yPos = startY + (r * rowSpacing);
 
           for (let c = 0; c < itemsInRow; c++) {
               let ans = allAnswers[answerIndex];
@@ -564,29 +558,9 @@
               el.className = 'target-html-label';
               el.innerHTML = ans.text;
               
-              // ПРИМЕНЕНИЕ ЦВЕТОВ И СТИЛЕЙ
-              el.style.background = CFG.visual.qBoxColor || 'rgba(15, 20, 25, 0.95)';
-              el.style.color = CFG.visual.tColor || '#ffffff';
+              applyPanelStyle(el, 't'); // Применяем те же стили!
               el.style.fontSize = (CFG.visual.tSize || 22) + "px";
               el.style.fontFamily = `"${CFG.visual.fontFamily}", sans-serif`;
-              
-              let borderStyle = CFG.visual.tBorder || 'solid';
-              let themeGlow = (CFG.visual.qGlow && CFG.visual.qGlow !== "#000000") ? CFG.visual.qGlow : "#00ffcc";
-              
-              if (borderStyle === 'solid') {
-                  el.style.border = `2px solid ${themeGlow}`;
-                  el.style.boxShadow = 'none';
-              } else if (borderStyle === 'glow') {
-                  el.style.border = 'none';
-                  el.style.boxShadow = `0 0 15px ${themeGlow}`;
-              } else {
-                  el.style.border = 'none';
-                  el.style.boxShadow = 'none';
-              }
-              
-              if (CFG.visual.tGlow && CFG.visual.tGlow !== "#000000") {
-                   el.style.textShadow = `0 0 10px ${CFG.visual.tGlow}`;
-              }
 
               tc.appendChild(el);
 

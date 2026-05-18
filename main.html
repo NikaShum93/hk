@@ -546,7 +546,7 @@
       let totalRows = Math.ceil(allAnswers.length / maxCols);
       
       // Блок вариантов будет компактным
-      const rowSpacing = targetW + 30; 
+      const rowSpacing = targetW + 65; // УВЕЛИЧЕН ОТСТУП
       const totalBlockHeight = (totalRows - 1) * rowSpacing;
 
       // Центрируем весь блок мишеней в безопасной зоне
@@ -619,8 +619,8 @@
     update() {
       if (this.state !== 'playing') return;
 
-      const speed = CFG.gameplay.hookSpeed || 10;
-      const swingSpeed = CFG.gameplay.swingSpeed || 0.035;
+      const flightSpeed = 18; 
+      const swingSpeed = ((CFG.gameplay.hookSpeed || 10) / 10) * 0.035;
       
       this.hook.x = canvas.width / 2;
       this.hook.y = canvas.height - (CFG.visual.heroSize || 150)/2 + (CFG.visual.hookOffsetY || 0);
@@ -639,11 +639,11 @@
         this.hook.angle = Math.sin(this.hook.time) * (Math.PI / 2.2);
       } 
       else if (this.hookState === 'shooting') {
-        this.hook.length += speed;
+        this.hook.length += flightSpeed;
         const hx = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
         const hy = this.hook.y - Math.cos(this.hook.angle) * this.hook.length;
 
-        const hitPadding = 35;
+        const hitPadding = 65; // УВЕЛИЧЕН РАДИУС
 
         for (let i = 0; i < this.targets.length; i++) {
           let t = this.targets[i];
@@ -661,7 +661,7 @@
         }
       } 
       else if (this.hookState === 'retracting') {
-        this.hook.length -= speed * 1.5; 
+        this.hook.length -= flightSpeed * 1.5; 
         
         if (this.hook.caughtTarget) {
           this.hook.caughtTarget.x = this.hook.x + Math.sin(this.hook.angle) * this.hook.length;
